@@ -1,0 +1,32 @@
+{
+  "name": "open-referral-gql-api",
+  "version": "1.0.0",
+  "description": "GraphQL API for Open Referral",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cityofasheville/open-referral-gql-api.git"
+  },
+  "keywords": [
+    "Open Referral",
+    "GraphQL"
+  ],
+  "author": "Eric Jackson",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cityofasheville/open-referral-gql-api/issues"
+  },
+  "homepage": "https://github.com/cityofasheville/open-referral-gql-api#readme",
+  "dependencies": {
+    "bunyan": "^1.8.12",
+    "coa-node-logging": "^2.0.3",
+    "dotenv": "^6.0.0",
+    "express": "^4.16.3",
+    "fs": "^0.0.1-security",
+    "pg": "^7.4.3",
+    "pg-pool": "^2.0.3"
+  }
+}
