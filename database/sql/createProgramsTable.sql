@@ -2,7 +2,7 @@ create table if not exists programs (
   id varchar(36) primary key,
   name varchar(256) not null,
   alternate_name varchar(256),
-  organization_id varchar(36) references organizations(id)
+  organization_id varchar(36) references organizations(id) not null
 );
 truncate table programs;
 select 'OK' as result;

@@ -58,11 +58,12 @@ return runTaskSequence(jobs, 'db')
 .then((status) => {
   console.log("Back from task sequence");
   if (status[0].result !== 'OK') throw new Error(`Bad result creating tables: ${status[0].result}`);
-  return Promise.resolve('0');
+  process.exit(0);
 })
 .catch((err) => {
   console.log(`Error: ${err}`);
   logger.error(`Error: ${JSON.stringify(err)}`);
+  process.exit(1);
 });
 
 
