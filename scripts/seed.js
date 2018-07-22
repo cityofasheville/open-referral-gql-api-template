@@ -37,6 +37,7 @@ async function runTaskSequence(tables) {
 
   // Set up the organization
   const i = fk.random.number({min: 1, max: 100000});
+  const j = fk.random.number({min: 1, max: 100000});
   const orgId = uuid();
   
   let args = [
@@ -59,7 +60,32 @@ async function runTaskSequence(tables) {
   
   return cn.query(query, args)
   .then(res => {
-    console.log('Back from query')
+    // Now set up a program
+    const programId = uuid();
+    return cn.query(
+      `insert into programs (id, name, alternate_name, organization_id) values ('${programId}', $1, $2, '${orgId}')`,
+      [
+        fk.commerce.productName(),
+        (j % 2 == 0) ? fk.commerce.productName() : null,
+      ]
+    )
+    .then(res => {
+      // Now set up service
+      const serviceId = uuid();
+      return cn.query(
+        `insert into services (id, organization_id, program_id, name,
+         alternate_name, description, url, status)
+         values (
+           '${serviceId}', '${orgId}', '${programId}', $1, $2, $3, $4, 'active'
+         )`,
+         [
+           fk.commerce.productName(),
+           ((i%j)%2 == 0) ? fk.commerce.productName() : null,
+           fk.lorem.paragraph(), // description
+           fk.internet.url(), // url
+         ]
+      );
+    });
   })
   .catch(err => Promise.reject(`Query error: ${err.message}`));
 }
