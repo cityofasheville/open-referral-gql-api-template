@@ -2,8 +2,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const Logger = require('coa-node-logging');
-const ConnectionManager = require('./db/connection_manager');
-const connectionDefinitions = require('./connection_definitions');
+const ConnectionManager = require('../common/db/connection_manager');
+const connectionDefinitions = require('../common/connection_definitions');
 
 const logger = new Logger('or-api', './or-api.log');
 
@@ -52,7 +52,6 @@ async function runTaskSequence(tasks) {
 }
 
 const jobs = require('./sql/tables');
-console.log(jobs);
 
 return runTaskSequence(jobs, 'db')
 .then((status) => {

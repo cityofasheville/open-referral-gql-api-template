@@ -2,8 +2,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const Logger = require('coa-node-logging');
-const ConnectionManager = require('./db/connection_manager');
-const connectionDefinitions = require('./connection_definitions');
+const ConnectionManager = require('../common/db/connection_manager');
+const connectionDefinitions = require('../common/connection_definitions');
 
 const logger = new Logger('or-api', './or-api.log');
 
@@ -30,7 +30,7 @@ async function runTaskSequence(tasks) {
   let errMessage = '';
 
   for (let i = 0; i < tasks.length && !hasError; i += 1) {
-    const task = tasks[i].name;
+    const task = tasks[i];
     console.log(`Run task ${task}`);
     try {
       result = await runSql(`drop table ${task}; select 'OK' as result;`, 'aws');
@@ -48,10 +48,32 @@ async function runTaskSequence(tasks) {
   return Promise.resolve(result.rows);
 }
 
-const jobs = require('./sql/tables').reverse();
-console.log(jobs);
+const tables = [
+  'organizations',
+  'programs',
+  'services',
+  'taxonomies',
+  'service_taxonomies',
+  'locations',
+  'services_at_location',
+  'contacts',
+  'phones',
+  'physical_addresses',
+  'postal_addresses',
+  'regular_schedules',
+  'holiday_schedules',
+  'funding',
+  'eligibility',
+  'service_areas',
+  'required_documents',
+  'payments_accepted',
+  'languages',
+  'accessibility_for_disabilities',
+  'metadata',
+  'meta_table_descriptions',
+];
 
-return runTaskSequence(jobs, 'db')
+return runTaskSequence(tables.reverse(), 'db')
 .then((status) => {
   console.log("Back from task sequence");
   if (status[0].result !== 'OK') throw new Error(`Bad result creating tables: ${status[0].result}`);
