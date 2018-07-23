@@ -39,7 +39,9 @@ async function runTaskSequence(tables) {
   const i = fk.random.number({min: 1, max: 100000});
   const j = fk.random.number({min: 1, max: 100000});
   const orgId = uuid();
-  
+  const programId = uuid();
+  const serviceId = uuid();
+  let taxonomies = [];
   let args = [
     orgId, // orgId
     `${fk.company.companyName()}, ${fk.company.companySuffix()}`, // name
@@ -60,32 +62,67 @@ async function runTaskSequence(tables) {
   
   return cn.query(query, args)
   .then(res => {
+    return cn.query('select * from taxonomies')
+  })
+  .then(res => {
+    console.log(res.rows);
+    console.log(res.rows.length);
+    // Add taxonomies
+    if(res.rows.length > 0) {
+      taxonomies = res.rows.map(itm => {
+        return {name: itm.name, id: itm.id};
+      });
+      return Promise.resolve(null);
+    }
+    taxonomies = [
+      { name: 'housing', id: uuid() },
+      { name: 'benefits', id: uuid() },
+      { name: 'education', id: uuid() },
+      { name: 'health', id: uuid() },
+      { name: 'jobs', id: uuid() },
+      { name: 'legal', id: uuid() },
+      { name: 'support', id: uuid() },
+    ];
+    query = `insert into taxonomies (id, name)
+    values `;
+    taxonomies.forEach((t, icnt) => {
+      query += `('${t.id}', '${t.name}' )`
+      if (icnt < taxonomies.length - 1) query += ', ';
+    });
+    return cn.query(query);
+  })
+  .then(res => {
     // Now set up a program
-    const programId = uuid();
     return cn.query(
       `insert into programs (id, name, alternate_name, organization_id) values ('${programId}', $1, $2, '${orgId}')`,
       [
         fk.commerce.productName(),
         (j % 2 == 0) ? fk.commerce.productName() : null,
       ]
-    )
-    .then(res => {
-      // Now set up service
-      const serviceId = uuid();
-      return cn.query(
-        `insert into services (id, organization_id, program_id, name,
-         alternate_name, description, url, status)
-         values (
-           '${serviceId}', '${orgId}', '${programId}', $1, $2, $3, $4, 'active'
-         )`,
-         [
-           fk.commerce.productName(),
-           ((i%j)%2 == 0) ? fk.commerce.productName() : null,
-           fk.lorem.paragraph(), // description
-           fk.internet.url(), // url
-         ]
-      );
-    });
+    );
+  })
+  .then(res => {
+    // Now set up service
+    return cn.query(
+      `insert into services (id, organization_id, program_id, name,
+        alternate_name, description, url, status)
+        values (
+          '${serviceId}', '${orgId}', '${programId}', $1, $2, $3, $4, 'active'
+        )`,
+        [
+          fk.commerce.productName(),
+          ((i%j)%2 == 0) ? fk.commerce.productName() : null,
+          fk.lorem.paragraph(), // description
+          fk.internet.url(), // url
+        ]
+    );
+  })
+  .then(res => {
+    const tindex = fk.random.number({min: 0, max: 6});
+    return cn.query(
+      `insert into service_taxonomies (id, service_id, taxonomy_id)
+       values ('${uuid()}', '${serviceId}', '${taxonomies[tindex].id}')`
+    );
   })
   .catch(err => Promise.reject(`Query error: ${err.message}`));
 }
