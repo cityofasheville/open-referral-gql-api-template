@@ -11,23 +11,6 @@ const logger = new Logger('or-api', './or-api.log');
 
 const connectionManager = new ConnectionManager(connectionDefinitions, logger);
 
-async function runSql(filePath, dbName) {
-  const fdSql = fs.openSync(filePath, 'r');
-  const sql = fs.readFileSync(fdSql, { encoding: 'utf8' });
-  const cn = connectionManager.getConnection(dbName);
-  if (!cn) {
-    console.log('No database connection');
-  }
-  return cn.query(sql)
-  .then((res) => {
-    if (res instanceof Array) {
-      return res[res.length - 1];
-    }
-    return res;
-  })
-  .catch(err => Promise.reject(`Query error: ${err.message}`));
-}
-
 async function runTaskSequence(tables) {
   let result = null;
   let hasError = false;

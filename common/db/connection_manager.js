@@ -21,6 +21,7 @@ class ConnectionManager {
         c = connection.connection = new Connection(name, connection.config, this.logger);
       }
     } else {
+      console.log(`Unknown database connection ${name}`, {});
       this.logger.error('unknown-db-connection', `Unknown database connection ${name}`, {});
     }
     return c;
