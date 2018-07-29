@@ -11,7 +11,12 @@ const connectionDefinitions = require('./common/connection_definitions');
 
 const logger = new Logger('or-api', './or-api.log');
 const connectionManager = new ConnectionManager(connectionDefinitions, logger);
-
+/*
+Tasks:
+  - Create services
+  - Add organization id as argument to both services and programs
+  - Add program id as argument to services
+*/
 const typeDefs = gql`
   type Organization {
     id: String
@@ -126,7 +131,6 @@ const resolvers = {
   },
   Organization: {
     services: (parent, args, context) => {
-      // parent.id to get services.
       const cn = connectionManager.getConnection('aws');
       const q = `select * from services where organization_id = '${parent.id}'`;
       return cn.query(q)
