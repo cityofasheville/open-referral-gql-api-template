@@ -30,6 +30,7 @@ const typeDefs = gql`
     year_incorporated: Int
     legal_status: String
     services: [Service]
+    programs: [Program]
   }
 
   type Service {
@@ -52,20 +53,126 @@ const typeDefs = gql`
 
   type Program {
     id: String
+    name: String
+    alternate_name: String
+    organization_id: String
+    organization: Organization
+    services: [Service]
+  }
+
+  type Taxonomy {
+    id: String
+    name: String
+    parent_id: String
+    parent_name: String
+    vocabulary: String
+  }
+
+  type ServiceTaxonomy {
+    id: String
+    service_id: String
+    taxonomy_id: String
+    taxonomy_detail: String
+  }
+
+  type Location {
+    id: String
+    organization_id: String
+    name: String
+    alternate_name: String
+    description: String
+    transportation: String
+    latitude: Float
+    longitude: Float
+  }
+
+  type ServiceAtLocation {
+    id: String
+    service_id: String
+    location_id: String
+    description: String
   }
 
   type Query {
     "This is documentation"
     organizations: [Organization]
-    services: [Service]
+    services(taxonomies: [String], locations: [String]): [Service]
+    programs: [Program]
+    taxonomies: [Taxonomy]
+    service_taxonomies: [ServiceTaxonomy]
+    locations: [Location]
+    services_at_location: [ServiceAtLocation]
   }
 `;
+
+function loadServicesAtLocation (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      service_id: itm.service_id,
+      location_id: itm.location_id,
+      description: itm.description,
+    };
+  });
+}
+
+function loadLocations (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      organization_id: itm.organization_id,
+      name: itm.name,
+      alternate_name: itm.alternate_name,
+      description: itm.description,
+      transportation: itm.transportation,
+      latitude: itm.latitude,
+      longitude: itm.longitude,
+    };
+  });
+}
+
+function loadServiceTaxonomies (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      service_id: itm.service_id,
+      taxonomy_id: itm.taxonomy_id,
+      taxonomy_detail: itm.taxonomy_detail,
+    };
+  });
+}
+
+function loadTaxonomies (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      name: itm.name,
+      parent_id: itm.parent_id,
+      parent_name: itm.parent_name,
+      vocabulary: itm.vocabulary,
+    };
+  });
+}
+
+function loadPrograms (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      name: itm.name,
+      alternate_name: itm.alternate_name,
+      organization_id: itm.organization_id,
+      organization: null,
+      services: [],
+    };
+  });
+}
 
 function loadServices (rows) {
   return rows.map(itm => {
     return {
       id: itm.id,
       organization_id: itm.organization_id,
+      program_id: itm.program_id,
       name: itm.name,
       alternate_name: itm.alternate_name,
       description: itm.description,
@@ -78,6 +185,8 @@ function loadServices (rows) {
       fees: itm.fees,
       accreditations: itm.accreditations,
       licenses: itm.licenses,
+      program: null,
+      organization: null
     };
   });
 }
@@ -100,6 +209,7 @@ function loadOrganizations (rows) {
       year_incorporated: year,
       legal_status: itm.legal_status,
       services: null,
+      programs: null
     };
   });
 }
@@ -128,6 +238,61 @@ const resolvers = {
       })
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
+    programs: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      return cn.query('select * from programs')
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadPrograms(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    taxonomies: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      return cn.query('select * from taxonomies')
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadTaxonomies(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    service_taxonomies: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      return cn.query('select * from service_taxonomies')
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadServiceTaxonomies(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    locations: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      return cn.query('select * from locations')
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadLocations(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    services_at_location: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      return cn.query('select * from services_at_location')
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadLocations(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
   },
   Organization: {
     services: (parent, args, context) => {
@@ -141,6 +306,9 @@ const resolvers = {
         return Promise.resolve(null);
       })
       .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    programs: (parent, args, context) => {
+      return null; // TBD
     }
   },
   Service: {
@@ -155,6 +323,17 @@ const resolvers = {
         return Promise.resolve(null);
       })
       .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    program: (parent, args, context) => {
+      return null; // TBD
+    },
+  },
+  Program: { // TBD
+    organization: (parent, args, context) => {
+      return null;
+    },
+    services: (parent, args, context) => {
+      return null;
     },
   },
 };
