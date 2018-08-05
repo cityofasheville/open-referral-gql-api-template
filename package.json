@@ -31,7 +31,6 @@
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
-    "fs": "^0.0.1-security",
     "graphql": "^0.13.2",
     "pg": "^7.4.3",
     "pg-pool": "^2.0.3",

@@ -45,9 +45,48 @@ async function runTaskSequence(tables) {
       tax_status, tax_id, year_incorporated, legal_status)
     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`;
   
-  return cn.query(query, args)
-  .then(res => {
-    return cn.query('select * from taxonomies')
+
+  let fd = fs.openSync('./scripts/sample/locations.json', 'r');
+  const nlocations = JSON.parse(fs.readFileSync(fd, { encoding: 'utf8' })).data.map(itm => {
+    return {
+      id: uuid(),
+      name: itm.tag,
+      alternate_name: itm.display_name,
+    };
+  });
+  fs.closeSync(fd);
+  fd = fs.openSync('./scripts/sample/taxonomies.json', 'r');
+  const ntaxonomies = JSON.parse(fs.readFileSync(fd, { encoding: 'utf8' })).data.map(itm => {
+    return {
+      id: uuid(),
+      name: itm.tag,
+      alternate_name: itm.display_name,
+    };
+  });
+  fs.closeSync(fd);
+
+  let qq = 'insert into locations (id, name, alternate_name) values ';
+  nlocations.forEach((loc, icnt) => {
+    qq += `('${loc.id}', '${loc.name}', '${loc.alternate_name}')`
+    if (icnt < nlocations.length - 1) qq += ', ';
+  });
+  
+  return cn.query(qq)
+  .then(() => {
+    qq = 'insert into taxonomies (id, name, alternate_name) values ';
+    ntaxonomies.forEach((loc, icnt) => {
+      qq += `('${loc.id}', '${loc.name}', '${loc.alternate_name}')`
+      if (icnt < ntaxonomies.length - 1) qq += ', ';
+    });
+    console.log(qq);
+    return cn.query(qq)
+    
+  })
+  .then (() => {
+    return cn.query(query, args)
+    .then(res => {
+      return cn.query('select * from taxonomies')
+    });
   })
   .then(res => {
     // Add taxonomies

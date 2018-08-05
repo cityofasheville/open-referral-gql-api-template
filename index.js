@@ -11,12 +11,7 @@ const connectionDefinitions = require('./common/connection_definitions');
 
 const logger = new Logger('or-api', './or-api.log');
 const connectionManager = new ConnectionManager(connectionDefinitions, logger);
-/*
-Tasks:
-  - Create services
-  - Add organization id as argument to both services and programs
-  - Add program id as argument to services
-*/
+
 const typeDefs = gql`
   type Organization {
     id: String
@@ -229,7 +224,41 @@ const resolvers = {
     },
     services: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from services')
+      let taxNames = null; // taxonomies
+      let locNames = null; // locations
+      if (args.taxonomies && args.taxonomies.length > 0) {
+        taxNames = args.taxonomies;
+      }
+      if (args.locations && args.locations.length > 0) {
+        locNames = args.locations;
+      }
+
+      let queryItems = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
+      let queryTables = 'FROM services AS s ';
+      let queryWhere = (taxNames || locNames) ? 'where ' : ' ';
+      if (taxNames) {
+        queryTables += 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
+        + 'LEFT OUTER JOIN taxonomies AS t ON t.id = st.taxonomy_id ';
+        // queryItems += ', t.name AS taxonomy_name ';
+      } 
+      if (locNames) {
+        queryTables += 'LEFT OUTER JOIN services_at_location AS sl ON s.id = sl.service_id '
+        + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
+        // queryItems += ', l.name AS location_name ';
+      }
+      const queryArgs = [];
+      if (taxNames) {
+        queryWhere += 't.name = ANY($1) '
+        queryArgs.push(taxNames);
+      }
+      if (locNames) {
+        queryWhere += (taxNames) ? 'AND l.name = ANY($2) ' : 'l.name = ANY($1)';
+        queryArgs.push(locNames);
+      }
+      const query = queryItems + queryTables + queryWhere;
+      console.log(`QUERY: ${query}`, queryArgs)
+//          services(taxonomies: [String], locations: [String]): [Service]
+      return cn.query(query, queryArgs)
       .then (res => {
         if (res.rows.length > 0) {
           return loadServices(res.rows);
