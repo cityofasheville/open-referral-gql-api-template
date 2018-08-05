@@ -280,11 +280,9 @@ const resolvers = {
         if (res.rows.length > 0) {
           return loadServices(res.rows);
         }
-        console.log('Should NOT be here');
         return Promise.resolve(null);
       })
       .catch(error => Promise.reject(`Query error: ${error.message}`));
-      console.log('Should NOT be here');
     },
     programs: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
