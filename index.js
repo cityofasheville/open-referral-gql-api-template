@@ -15,8 +15,16 @@ const connectionManager = new ConnectionManager(connectionDefinitions, logger);
   TASKS:
 
     XXX 1. Fix locations insert in seed.js to insert type and parent_id
-    2. Figure out how to put in variable substitution for localized queries
-    3. Add location and taxonomy information to service GraphQL type
+    2. Add location and taxonomy information to service GraphQL type
+        Note that this currently works:
+          query {
+            services(locations: ["nc", "buncombe"], taxonomies: ["jobs"]) {
+              id
+              name
+            }
+          }
+        We just need to be able to see the resulting locations so client can sort/deal.
+    3. Figure out how to put in variable substitution for localized queries (maybe in client?)
     4. Figure out how to add pages to the DB and GraphQL
     5. Decide how to deal with ordinals
     6. Add configurations??
@@ -174,25 +182,26 @@ function loadPrograms (rows) {
 
 function loadServices (rows) {
   return rows.map(itm => {
-    return {
+    const service = {
       id: itm.id,
       organization_id: itm.organization_id,
       program_id: itm.program_id,
       name: itm.name,
       alternate_name: itm.alternate_name,
       description: itm.description,
-      email: itm.email,
-      url: itm.url,
-      status: itm.status,
-      interpretation_services: itm.interpretation_services,
-      application_process: itm.application_process,
-      wait_time: itm.wait_time,
-      fees: itm.fees,
-      accreditations: itm.accreditations,
-      licenses: itm.licenses,
+      email: itm.email || null,
+      url: itm.url || null,
+      status: itm.status || null,
+      interpretation_services: itm.interpretation_services || null,
+      application_process: itm.application_process || null,
+      wait_time: itm.wait_time || null,
+      fees: itm.fees || null,
+      accreditations: itm.accreditations || null,
+      licenses: itm.licenses || null,
       program: null,
       organization: null
     };
+    return service;
   });
 }
 
@@ -266,16 +275,16 @@ const resolvers = {
         queryArgs.push(locNames);
       }
       const query = queryItems + queryTables + queryWhere;
-      console.log(`QUERY: ${query}`, queryArgs)
-//          services(taxonomies: [String], locations: [String]): [Service]
       return cn.query(query, queryArgs)
       .then (res => {
         if (res.rows.length > 0) {
           return loadServices(res.rows);
         }
+        console.log('Should NOT be here');
         return Promise.resolve(null);
       })
       .catch(error => Promise.reject(`Query error: ${error.message}`));
+      console.log('Should NOT be here');
     },
     programs: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
