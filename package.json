@@ -32,9 +32,13 @@
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "graphql": "^0.13.2",
+    "mssql": "^3.3.0",
     "pg": "^7.4.3",
     "pg-pool": "^2.0.3",
     "uuid": "^3.3.2"
+  },
+  "optionalDependencies": {
+    "msnodesqlv8": "^0.6.7"
   },
   "devDependencies": {
     "babel-cli": "6.5.1",

@@ -11,6 +11,16 @@ const connectionDefinitions = require('./common/connection_definitions');
 
 const logger = new Logger('or-api', './or-api.log');
 const connectionManager = new ConnectionManager(connectionDefinitions, logger);
+/*
+  TASKS:
+
+    XXX 1. Fix locations insert in seed.js to insert type and parent_id
+    2. Figure out how to put in variable substitution for localized queries
+    3. Add location and taxonomy information to service GraphQL type
+    4. Figure out how to add pages to the DB and GraphQL
+    5. Decide how to deal with ordinals
+    6. Add configurations??
+*/
 
 const typeDefs = gql`
   type Organization {

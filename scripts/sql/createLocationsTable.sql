@@ -6,7 +6,9 @@ create table if not exists locations (
   description text,
   transportation text,
   latitude numeric,
-  longitude numeric
+  longitude numeric,
+  type varchar(256),
+  parent_location_id varchar(36) references locations(id)
 );
 truncate table locations;
 select 'OK' as result;
