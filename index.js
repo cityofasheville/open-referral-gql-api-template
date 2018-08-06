@@ -15,12 +15,22 @@ const connectionManager = new ConnectionManager(connectionDefinitions, logger);
   TASKS:
 
     XXX 1. Fix locations insert in seed.js to insert type and parent_id
-    2. Add location and taxonomy information to service GraphQL type
+    XXX 2. Add location and taxonomy information to service GraphQL type
         Note that this currently works:
-          query {
-            services(locations: ["nc", "buncombe"], taxonomies: ["jobs"]) {
-              id
+          {
+            services(taxonomies: ["health"], locations:["buncombe", "nc", "localized"]) {
               name
+              description
+              url
+              taxonomies {
+                name
+                parent_name
+                id
+              }
+              locations {
+                name
+                alternate_name
+              }
             }
           }
         We just need to be able to see the resulting locations so client can sort/deal.
@@ -62,6 +72,8 @@ const typeDefs = gql`
     fees: String
     accreditations: String
     licenses: String
+    taxonomies: [Taxonomy]
+    locations: [Location]
   }
 
   type Program {
@@ -156,6 +168,7 @@ function loadServiceTaxonomies (rows) {
 }
 
 function loadTaxonomies (rows) {
+  console.log(rows);
   return rows.map(itm => {
     return {
       id: itm.id,
@@ -242,6 +255,7 @@ const resolvers = {
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
     services: (parent, args, context) => {
+      console.log('services');
       const cn = connectionManager.getConnection('aws');
       let taxNames = null; // taxonomies
       let locNames = null; // locations
@@ -265,6 +279,7 @@ const resolvers = {
         + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
         // queryItems += ', l.name AS location_name ';
       }
+
       const queryArgs = [];
       if (taxNames) {
         queryWhere += 't.name = ANY($1) '
@@ -373,6 +388,41 @@ const resolvers = {
     program: (parent, args, context) => {
       return null; // TBD
     },
+    taxonomies: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      const q = `select t.* from service_taxonomies as st `
+      + 'LEFT OUTER JOIN taxonomies as t ON t.id = st.taxonomy_id '
+      + `where st.service_id = '${parent.id}' `;
+      console.log(q);
+      return cn.query(q)
+      .then (res => {
+        console.log(`Returned ${res.rows.length}`);
+        if (res.rows.length > 0) {
+          return loadTaxonomies(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    locations: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      const q = `select l.* from services_at_location as sl `
+      + 'LEFT OUTER JOIN locations as l ON l.id = sl.location_id '
+      + `where sl.service_id = '${parent.id}' `;
+
+      return cn.query(q)
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadLocations(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+    program: (parent, args, context) => {
+      return null; // TBD
+    },
+
   },
   Program: { // TBD
     organization: (parent, args, context) => {
