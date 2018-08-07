@@ -118,10 +118,18 @@ const typeDefs = gql`
     description: String
   }
 
+  type Page {
+    id: String
+    content: String
+    location_id: String
+    taxonomy_id: String
+  }
+
   type Query {
     "This is documentation"
     organizations: [Organization]
     services(taxonomies: [String], locations: [String]): [Service]
+    pages(taxonomies: [String], locations: [String]): [Page]
     programs: [Program]
     taxonomies: [Taxonomy]
     service_taxonomies: [ServiceTaxonomy]

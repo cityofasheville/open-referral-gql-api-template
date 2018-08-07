@@ -33,7 +33,7 @@ async function runTaskSequence(tasks) {
     const task = tasks[i];
     console.log(`Run task ${task}`);
     try {
-      result = await runSql(`drop table ${task}; select 'OK' as result;`, 'aws');
+      result = await runSql(`drop table if exists ${task}; select 'OK' as result;`, 'aws');
     } catch (err) {
       hasError = true;
       errMessage = err;
@@ -71,6 +71,7 @@ const tables = [
   'accessibility_for_disabilities',
   'metadata',
   'meta_table_descriptions',
+  'pages',
 ];
 
 return runTaskSequence(tables.reverse(), 'db')

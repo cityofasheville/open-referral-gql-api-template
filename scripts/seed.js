@@ -9,7 +9,7 @@ const uuid = require('../common/uuid');
 const logger = new Logger('or-api', './or-api.log');
 
 const connectionManager = new ConnectionManager(connectionDefinitions, logger);
-
+console.log('Seed the DB');
 async function runTaskSequence(tables) {
   let result = null;
   let hasError = false;
@@ -63,7 +63,7 @@ async function runTaskSequence(tables) {
       itm.parent_location_id = parentId;
     }
   });
-console.log(locations);
+
   // Insert taxonomies into table
   query = 'insert into taxonomies (id, name, alternate_name) values ';
   taxonomies.forEach((loc, icnt) => {
@@ -80,6 +80,27 @@ console.log(locations);
       if (icnt < locations.length - 1) query += ', ';
     });
     return cn.query(query)
+  })
+  .then(() => {
+    // Load pages
+    console.log('Loading the pages');
+    fd = fs.openSync('./scripts/sample/pages.json', 'r');
+    let pages = JSON.parse(fs.readFileSync(fd, { encoding: 'utf8' })).data.map(itm => {
+      return {
+        id: uuid(),
+        content: itm.content,
+        location_id: locationMapping[itm.jurisdiction].id,
+        taxonomy_id: taxonomyMapping[itm.topic].id,
+      };
+    });
+    fs.closeSync(fd);
+    query = 'insert into pages (id, content, location_id, taxonomy_id) values ';
+    pages.forEach((itm, icnt) => {
+      const content = itm.content.replace(/"/g, '\\"').replace(/'/g, "''");
+      query += `('${itm.id}', '${content}', '${itm.location_id}', '${itm.taxonomy_id}')`
+      if (icnt < pages.length - 1) query += ', ';
+    });
+    return cn.query(query);
   })
   .then(() => {
     console.log('Loading the resources!');
@@ -177,6 +198,7 @@ console.log(locations);
     })
     .then(() => {
       console.log('All done');
+      return Promise.resolve(null);
     });
   })
   .catch(err => Promise.reject(`Query error: ${err.message}`));

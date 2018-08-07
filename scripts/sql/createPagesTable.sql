@@ -1,8 +1,9 @@
 create table if not exists pages (
   id varchar(36) primary key,
-  jurisdiction varchar(36) not null,
-  topic varchar(36),
-  content text
+  content text,
+  location_id varchar(36) references locations,
+  taxonomy_id varchar(36) references taxonomies
 );
 truncate table pages;
 select 'OK' as result;
+

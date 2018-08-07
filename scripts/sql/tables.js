@@ -87,4 +87,8 @@ module.exports = [
     name: 'meta_table_descriptions',
     create: 'createMetaTableDescriptionsTable',
   },
+  {
+    name: 'pages',
+    create: 'createPagesTable',
+  }
 ];
