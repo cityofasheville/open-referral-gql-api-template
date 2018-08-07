@@ -249,8 +249,30 @@ function loadOrganizations (rows) {
   });
 }
 
+function loadPages (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      content: itm.content,
+      location_id: itm.location_id,
+      taxonomy_id: itm.taxonomy_id,
+    }
+  });
+}
+
 const resolvers = {
   Query: {
+    pages: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      return cn.query('select * from pages')
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loadPages(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
     organizations: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
       return cn.query('select * from organizations')
