@@ -119,7 +119,6 @@ async function runTaskSequence(tables) {
       };
     });
     fs.closeSync(fd);
-    console.log('Create an org, a service, and two connectors');
     // For each resource, we'll create an organization, a service,
     // a services_at_location and a service_taxonomy
     let organizations = [];
@@ -132,7 +131,7 @@ async function runTaskSequence(tables) {
       organizations.push({
         id: organizationId,
         name: r.name,
-        description: r.description,
+        description: 'No description - see associated service',
         url: r.url,
       });
       services.push({
