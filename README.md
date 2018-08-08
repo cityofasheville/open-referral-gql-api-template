@@ -1,5 +1,5 @@
 # open-referral-gql-api
-GraphQL API and DB creation for the open referral standard
+GraphQL API and DB creation for the [open referral standard](https://openreferral.readthedocs.io/en/latest/hsds/reference/).
 
 # Installation
 Clone this repo, then run `yarn` and `yarn start`. The API will be at http://localhost:4000/graphql.
