@@ -129,7 +129,7 @@ const typeDefs = gql`
     "This is documentation"
     organizations: [Organization]
     services(taxonomies: [String], locations: [String]): [Service]
-    pages(taxonomies: [String], locations: [String]): [Page]
+    pages: [Page]
     programs: [Program]
     taxonomies: [Taxonomy]
     service_taxonomies: [ServiceTaxonomy]

@@ -1,6 +1,9 @@
 # open-referral-gql-api
 GraphQL API and DB creation for the open referral standard
 
+# Installation
+Clone this repo, then run `yarn` and `yarn start`. The API will be at http://localhost:4000/graphql.
+
 # Modifications and Extensions to the Open Referral Standard
 
 1. Added an `alternate_name` column to `taxonomies`. I've used `alternate_name` in `locations`, for example, as the display name, with the regular name operating as the shorter version that can be used in code.
