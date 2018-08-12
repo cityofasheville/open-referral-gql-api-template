@@ -17,6 +17,28 @@ const connectionManager = new ConnectionManager(connectionDefinitions, logger);
     XXX 1. Fix locations insert in seed.js to insert type and parent_id
     XXX 2. Add location and taxonomy information to service GraphQL type
         Note that this currently works:
+          page(taxonomy: "education", location: "buncombe") {
+              location
+              taxonomy
+              common_content
+              local_content
+              common_services {
+                name
+                description
+                url
+              }
+              local_services {
+                name
+                description
+                url
+              }
+              localized_services{
+                name
+                description
+                url
+              }
+            }
+        As does this:
           {
             services(taxonomies: ["health"], locations:["buncombe", "nc", "localized"]) {
               name
