@@ -147,6 +147,7 @@ const typeDefs = gql`
     local_services: [Service]
     localized_services: [Service]
     location_id: String
+    location_tag: String
     location: String
     taxonomy_id: String
     taxonomy: String
@@ -210,6 +211,7 @@ const resolvers = {
         page.taxonomy_id = taxonomy.id;
         page.location = locations[locationName].alternate_name;
         page.location_id = locations[locationName].id;
+        page.location_tag = locationName;
         page.common_location_id = locations.nc.id;
         page.localized_location_id = locations.localized.id;
         return cn.query(`select * from pages where taxonomy_id = '${taxonomy.id}' `
@@ -340,7 +342,6 @@ const resolvers = {
   Page: {
     common_services: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      console.log(`Parent taxonomy id = ${parent.taxonomy_id}`);
       let q = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
       q += 'FROM services AS s '
       + 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
@@ -355,7 +356,6 @@ const resolvers = {
     },
     local_services: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      console.log(`Parent taxonomy id = ${parent.taxonomy_id}`);
       let q = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
       q += 'FROM services AS s '
       + 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
@@ -370,7 +370,6 @@ const resolvers = {
     },
     localized_services: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      console.log(`Parent taxonomy id = ${parent.taxonomy_id}`);
       let q = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
       q += 'FROM services AS s '
       + 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
@@ -378,10 +377,12 @@ const resolvers = {
       + 'LEFT OUTER JOIN services_at_location AS sl ON s.id = sl.service_id '
       + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
       + `WHERE t.id = '${parent.taxonomy_id}' AND l.id = '${parent.localized_location_id}'`;
-      console.log(q);
       return cn.query(q)
       .then(res => {
-        return loadServices(res.rows);
+        return loadServices(res.rows)
+        .map(s => {
+          return Object.assign({}, s, { url: s.url.replace(/{{common_jurisdiction}}/g, 'nc').replace(/{{local_jurisdiction}}/g, parent.location_tag)});
+        });
       });
     },
   },
