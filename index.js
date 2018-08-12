@@ -8,7 +8,7 @@ const uuidGenerate = require('./common/uuid');
 const Logger = require('coa-node-logging');
 const ConnectionManager = require('./common/db/connection_manager');
 const connectionDefinitions = require('./common/connection_definitions');
-
+const {loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation } = require('./server/loaders');
 const logger = new Logger('or-api', './or-api.log');
 const connectionManager = new ConnectionManager(connectionDefinitions, logger);
 /*
@@ -119,135 +119,29 @@ const typeDefs = gql`
   }
 
   type Page {
-    id: String
-    content: String
+    common_content: String
+    local_content: String
+    common_services: [Service]
+    local_services: [Service]
+    localized_services: [Service]
     location_id: String
+    location: String
     taxonomy_id: String
+    taxonomy: String
   }
 
   type Query {
     "This is documentation"
     organizations: [Organization]
     services(taxonomies: [String], locations: [String]): [Service]
-    pages: [Page]
+    page(taxonomy: String!, location: String!): Page
     programs: [Program]
     taxonomies: [Taxonomy]
     service_taxonomies: [ServiceTaxonomy]
-    locations: [Location]
+    locations(type: String): [Location]
     services_at_location: [ServiceAtLocation]
   }
-`;
-
-function loadServicesAtLocation (rows) {
-  return rows.map(itm => {
-    return {
-      id: itm.id,
-      service_id: itm.service_id,
-      location_id: itm.location_id,
-      description: itm.description,
-    };
-  });
-}
-
-function loadLocations (rows) {
-  return rows.map(itm => {
-    return {
-      id: itm.id,
-      organization_id: itm.organization_id,
-      name: itm.name,
-      alternate_name: itm.alternate_name,
-      description: itm.description,
-      transportation: itm.transportation,
-      latitude: itm.latitude,
-      longitude: itm.longitude,
-    };
-  });
-}
-
-function loadServiceTaxonomies (rows) {
-  return rows.map(itm => {
-    return {
-      id: itm.id,
-      service_id: itm.service_id,
-      taxonomy_id: itm.taxonomy_id,
-      taxonomy_detail: itm.taxonomy_detail,
-    };
-  });
-}
-
-function loadTaxonomies (rows) {
-  console.log(rows);
-  return rows.map(itm => {
-    return {
-      id: itm.id,
-      name: itm.name,
-      parent_id: itm.parent_id,
-      parent_name: itm.parent_name,
-      vocabulary: itm.vocabulary,
-    };
-  });
-}
-
-function loadPrograms (rows) {
-  return rows.map(itm => {
-    return {
-      id: itm.id,
-      name: itm.name,
-      alternate_name: itm.alternate_name,
-      organization_id: itm.organization_id,
-      organization: null,
-      services: [],
-    };
-  });
-}
-
-function loadServices (rows) {
-  return rows.map(itm => {
-    const service = {
-      id: itm.id,
-      organization_id: itm.organization_id,
-      program_id: itm.program_id,
-      name: itm.name,
-      alternate_name: itm.alternate_name,
-      description: itm.description,
-      email: itm.email || null,
-      url: itm.url || null,
-      status: itm.status || null,
-      interpretation_services: itm.interpretation_services || null,
-      application_process: itm.application_process || null,
-      wait_time: itm.wait_time || null,
-      fees: itm.fees || null,
-      accreditations: itm.accreditations || null,
-      licenses: itm.licenses || null,
-      program: null,
-      organization: null
-    };
-    return service;
-  });
-}
-
-function loadOrganizations (rows) {
-  return rows.map(itm => {
-    let year = null;
-    if (itm.year_incorporated){
-      year = JSON.stringify(itm.year_incorporated).slice(1,5);
-    } 
-    return {
-      id: itm.id,
-      name: itm.name,
-      alternate_name: itm.alternate_name,
-      description: itm.description,
-      email: itm.email,
-      url: itm.url,
-      tax_status: itm.tax_status,
-      tax_id: itm.tax_id,
-      year_incorporated: year,
-      legal_status: itm.legal_status,
-      services: null,
-      programs: null
-    };
-  });
-}
+`;    
 
 function loadPages (rows) {
   return rows.map(itm => {
@@ -262,16 +156,53 @@ function loadPages (rows) {
 
 const resolvers = {
   Query: {
-    pages: (parent, args, context) => {
+    page: (parent, args, context) => {
+      const taxonomyName = args.taxonomy;
+      const locationName = args.location;
+      const page = {
+        common_content: '',
+        local_content: '',
+        common_services: [],
+        local_services: [],
+        localized_services: [],
+        location: null,
+        taxonomy: null,
+        location_id: null,
+        taxonomy_id: null,
+        common_location_id: null,
+        localized_location_id: null,
+      };
+      const locations = {};
+      let taxonomy = null;
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from pages')
-      .then (res => {
-        if (res.rows.length > 0) {
-          return loadPages(res.rows);
-        }
-        return Promise.resolve(null);
+      return cn.query(`select * from locations where name = '${locationName}'  OR name = 'nc' OR name = 'localized'`)
+      .then(loc => {
+        loc.rows.forEach(r => {
+          locations[r.name] = r;
+        });
+        return cn.query(`select * from taxonomies where name = '${taxonomyName}'`);
       })
-      .catch(error => Promise.reject(`Query error: ${error.message}`));
+      .then(tax => {
+        taxonomy = tax.rows[0];
+        page.taxonomy = taxonomy.alternate_name;
+        page.taxonomy_id = taxonomy.id;
+        page.location = locations[locationName].alternate_name;
+        page.location_id = locations[locationName].id;
+        page.common_location_id = locations.nc.id;
+        page.localized_location_id = locations.localized.id;
+        return cn.query(`select * from pages where taxonomy_id = '${taxonomy.id}' `
+        + ` AND (location_id = '${locations[locationName].id}' OR location_id = '${locations.nc.id}')`);
+      })
+      .then(res => {
+        res.rows.forEach(p => {
+          if (p.location_id == locations.nc.id) {
+            page.common_content = p.content;
+          } else {
+            page.local_content = p.content;
+          }
+        });
+        return page;
+      });
     },
     organizations: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
@@ -285,7 +216,6 @@ const resolvers = {
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
     services: (parent, args, context) => {
-      console.log('services');
       const cn = connectionManager.getConnection('aws');
       let taxNames = null; // taxonomies
       let locNames = null; // locations
@@ -302,12 +232,10 @@ const resolvers = {
       if (taxNames) {
         queryTables += 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
         + 'LEFT OUTER JOIN taxonomies AS t ON t.id = st.taxonomy_id ';
-        // queryItems += ', t.name AS taxonomy_name ';
       } 
       if (locNames) {
         queryTables += 'LEFT OUTER JOIN services_at_location AS sl ON s.id = sl.service_id '
         + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
-        // queryItems += ', l.name AS location_name ';
       }
 
       const queryArgs = [];
@@ -363,8 +291,10 @@ const resolvers = {
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
     locations: (parent, args, context) => {
+      const query = (args.type) ? `select * from locations where type = '${args.type}'` : 'select * from locations';
+
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from locations')
+      return cn.query(query)
       .then (res => {
         if (res.rows.length > 0) {
           return loadLocations(res.rows);
@@ -383,6 +313,54 @@ const resolvers = {
         return Promise.resolve(null);
       })
       .catch(error => Promise.reject(`Query error: ${error.message}`));
+    },
+  },
+  Page: {
+    common_services: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      console.log(`Parent taxonomy id = ${parent.taxonomy_id}`);
+      let q = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
+      q += 'FROM services AS s '
+      + 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
+      + 'LEFT OUTER JOIN taxonomies AS t ON t.id = st.taxonomy_id '
+      + 'LEFT OUTER JOIN services_at_location AS sl ON s.id = sl.service_id '
+      + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
+      + `WHERE t.id = '${parent.taxonomy_id}' AND l.id = '${parent.common_location_id}'`;
+      return cn.query(q)
+      .then(res => {
+        return loadServices(res.rows);
+      });
+    },
+    local_services: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      console.log(`Parent taxonomy id = ${parent.taxonomy_id}`);
+      let q = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
+      q += 'FROM services AS s '
+      + 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
+      + 'LEFT OUTER JOIN taxonomies AS t ON t.id = st.taxonomy_id '
+      + 'LEFT OUTER JOIN services_at_location AS sl ON s.id = sl.service_id '
+      + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
+      + `WHERE t.id = '${parent.taxonomy_id}' AND l.id = '${parent.location_id}'`;
+      return cn.query(q)
+      .then(res => {
+        return loadServices(res.rows);
+      });
+    },
+    localized_services: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      console.log(`Parent taxonomy id = ${parent.taxonomy_id}`);
+      let q = 'SELECT s.id, s.organization_id, s.program_id, s.name, s.alternate_name,  s.url, s.description ';
+      q += 'FROM services AS s '
+      + 'LEFT OUTER JOIN service_taxonomies AS st ON s.id = st.service_id '
+      + 'LEFT OUTER JOIN taxonomies AS t ON t.id = st.taxonomy_id '
+      + 'LEFT OUTER JOIN services_at_location AS sl ON s.id = sl.service_id '
+      + 'LEFT OUTER JOIN locations AS l ON l.id = sl.location_id '
+      + `WHERE t.id = '${parent.taxonomy_id}' AND l.id = '${parent.localized_location_id}'`;
+      console.log(q);
+      return cn.query(q)
+      .then(res => {
+        return loadServices(res.rows);
+      });
     },
   },
   Organization: {
@@ -423,10 +401,8 @@ const resolvers = {
       const q = `select t.* from service_taxonomies as st `
       + 'LEFT OUTER JOIN taxonomies as t ON t.id = st.taxonomy_id '
       + `where st.service_id = '${parent.id}' `;
-      console.log(q);
       return cn.query(q)
       .then (res => {
-        console.log(`Returned ${res.rows.length}`);
         if (res.rows.length > 0) {
           return loadTaxonomies(res.rows);
         }
