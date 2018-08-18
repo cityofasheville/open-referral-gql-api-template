@@ -13,12 +13,13 @@ const organizationFields = `
 `;
 
 const serviceFields = `
+    id: String
     name: String
     alternate_name: String
     description: String
     email: String
     url: String
-    status: String!
+    status: String
     interpretation_services: String
     application_process: String
     wait_time: String
@@ -40,7 +41,6 @@ module.exports = gql`
   }
 
   type Service {
-    id: String
     ${serviceFields}
     organization: Organization
     program: Program
@@ -49,7 +49,7 @@ module.exports = gql`
   }
 
   input ServiceInput {
-    # Name and organization_id are required to create
+    # Name, status and organization_id are required to create
     ${serviceFields}
     organization_id: String
   }
@@ -109,5 +109,6 @@ module.exports = gql`
 
   type Mutation {
     organization(id: String, org: OrganizationInput!): Organization
+    service(id: String, service: ServiceInput!): Service
   }
 `;

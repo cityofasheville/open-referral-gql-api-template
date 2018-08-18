@@ -2,11 +2,75 @@ const connectionManager = require('../common/connection_manager');
 const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
+const doit = function (q, qArgs, id, action, tableName, loader) {
+  const cn = connectionManager.getConnection('aws');
+  return cn.query(q, qArgs)
+  .then(res => {
+    if (res.rowCount != 1) {
+      throw new Error(`Error ${action}.`);
+    }
+    // Now get the record back
+    return cn.query(`select * from ${tableName} where id='${id}'`)
+    .then (res => {
+      if (res.rows.length > 0) {
+        return loader(res.rows)[0];
+      }
+      throw new Error(`Unable to find record with id ${id}`);
+    });
+  })
+  .catch(err => {
+    console.log(err);
+    throw err;
+  });
+
+}
 module.exports = {
   Mutation: {
-    organization: (parent, args, context) => {
+    service: (parent, args, context) => {
+      const thing = args.service;
       const cn = connectionManager.getConnection('aws');
-      const id = args.id ? args.id : (args.org.id || uuid());
+      const id = args.id ? args.id : (thing.id || uuid());
+      // You can't overwrite the ID field
+      const allowed = ['name', 'alternate_name', 'description', 'url', 'email', 'status', 'organization_id', 'program_id', 'interpretation_services', 'application_process', 'wait_time', 'fees', 'accreditations', 'licenses' ];
+      let q = '';
+      const qArgs = [id];
+      let qCount = 2;
+
+      if (args.id) { // We are updating
+        let values = '';
+        let first = true;
+        Object.keys(thing).forEach(key => {
+          if (allowed.indexOf(key) >= 0) {
+            values += first ? '' : ', ';
+            first = false;
+            values += `${key} = $${qCount++}`;
+            qArgs.push(thing[key]);
+          }
+        });
+        q = `update services set ${values} where id = $1`;
+      } else { // Creating a new service
+        if (!thing.name || !thing.organization_id || ! thing.status) {
+          throw new Error('You must specify a name, organization_id and status to create a service');
+        }
+        let names = 'id';
+        let values = '$1';
+
+        Object.keys(thing).forEach(key => {
+          if (allowed.indexOf(key) >= 0) {
+            names += `, ${key}`;
+            values += `, $${qCount++}`;
+            qArgs.push(thing[key]);
+          }
+        });
+        q = `insert into services (${names}) values(${values})`;
+      }
+
+      return doit(q, qArgs, id, `${args.id ? 'updating' : 'creating'} service`, 'services', loadServices);
+    },
+    organization: (parent, args, context) => {
+      const thing = args.org;
+      const cn = connectionManager.getConnection('aws');
+      const id = args.id ? args.id : (thing.id || uuid());
       // You can't overwrite the ID field
       const allowed = ['name', 'alternate_name', 'description', 'url', 'email', 'tax_status', 'tax_id', 'year_incorporated', 'legal_status'];
       let q = '';
@@ -16,50 +80,32 @@ module.exports = {
       if (args.id) { // We are updating
         let values = '';
         let first = true;
-        Object.keys(args.org).forEach(key => {
+        Object.keys(thing).forEach(key => {
           if (allowed.indexOf(key) >= 0) {
             values += first ? '' : ', ';
             first = false;
             values += `${key} = $${qCount++}`;
-            qArgs.push(args.org[key]);
+            qArgs.push(thing[key]);
           }
         });
         q = `update organizations set ${values} where id = $1`;
       } else { // Creating a new organization
-        if (!args.org.name || !args.org.description) {
+        if (!thing.name || !thing.description) {
           throw new Error('You must specify a name and a description to create an organization');
         }
         let names = 'id';
         let values = '$1';
 
-        Object.keys(args.org).forEach(key => {
+        Object.keys(thing).forEach(key => {
           if (allowed.indexOf(key) >= 0) {
             names += `, ${key}`;
             values += `, $${qCount++}`;
-            qArgs.push(args.org[key]);
+            qArgs.push(thing[key]);
           }
         });
         q = `insert into organizations (${names}) values(${values})`;
       }
-
-      return cn.query(q, qArgs)
-      .then(res => {
-        if (res.rowCount != 1) {
-          throw new Error(`Error ${args.id ? 'updating' : 'inserting'} new organization.`);
-        }
-        // Now get the record back
-        return cn.query(`select * from organizations where id='${id}'`)
-        .then (res => {
-          if (res.rows.length > 0) {
-            return loadOrganizations(res.rows)[0];
-          }
-          throw new Error(`Unable to find record with id ${id}`);
-        });
-      })
-      .catch(err => {
-        console.log(err);
-        throw err;
-      });
+      return doit(q, qArgs, id, `${args.id ? 'updating' : 'creating'} organization`, 'organizations', loadOrganizations);
     },
   },
   Query: {
