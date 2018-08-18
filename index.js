@@ -4,27 +4,12 @@ const express = require('express');
 const session = require('express-session');
 const parseurl = require('parseurl');
 const cors = require('cors');
-const uuidGenerate = require('./common/uuid');
 
 /*
   TASKS:
     5. Decide how to deal with ordinals
     6. Add configurations??
 */
-
-
-
-function loadPages (rows) {
-  return rows.map(itm => {
-    return {
-      id: itm.id,
-      content: itm.content,
-      location_id: itm.location_id,
-      taxonomy_id: itm.taxonomy_id,
-    }
-  });
-}
-
 
 const { merge } = require('lodash');
 

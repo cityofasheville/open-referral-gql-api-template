@@ -1,7 +1,67 @@
 const connectionManager = require('../common/connection_manager');
-const {loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation } = require('./open_referral_loaders');
+const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation } = require('./open_referral_loaders');
+const uuid = require('../common/uuid');
 
 module.exports = {
+  Mutation: {
+    organization: (parent, args, context) => {
+      const cn = connectionManager.getConnection('aws');
+      const id = args.id ? args.id : (args.org.id || uuid());
+      // You can't overwrite the ID field
+      const allowed = ['name', 'alternate_name', 'description', 'url', 'email', 'tax_status', 'tax_id', 'year_incorporated', 'legal_status'];
+      let q = '';
+      const qArgs = [id];
+      let qCount = 2;
+
+      if (args.id) { // We are updating
+        let values = '';
+        let first = true;
+        Object.keys(args.org).forEach(key => {
+          if (allowed.indexOf(key) >= 0) {
+            values += first ? '' : ', ';
+            first = false;
+            values += `${key} = $${qCount++}`;
+            qArgs.push(args.org[key]);
+          }
+        });
+        q = `update organizations set ${values} where id = $1`;
+      } else { // Creating a new organization
+        if (!args.org.name || !args.org.description) {
+          throw new Error('You must specify a name and a description to create an organization');
+        }
+        let names = 'id';
+        let values = '$1';
+
+        Object.keys(args.org).forEach(key => {
+          if (allowed.indexOf(key) >= 0) {
+            names += `, ${key}`;
+            values += `, $${qCount++}`;
+            qArgs.push(args.org[key]);
+          }
+        });
+        q = `insert into organizations (${names}) values(${values})`;
+      }
+
+      return cn.query(q, qArgs)
+      .then(res => {
+        if (res.rowCount != 1) {
+          throw new Error(`Error ${args.id ? 'updating' : 'inserting'} new organization.`);
+        }
+        // Now get the record back
+        return cn.query(`select * from organizations where id='${id}'`)
+        .then (res => {
+          if (res.rows.length > 0) {
+            return loadOrganizations(res.rows)[0];
+          }
+          throw new Error(`Unable to find record with id ${id}`);
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        throw err;
+      });
+    },
+  },
   Query: {
     organizations: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');

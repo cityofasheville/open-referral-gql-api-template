@@ -1,6 +1,18 @@
 const connectionManager = require('../common/connection_manager');
 const {loadServices} = require('./open_referral_loaders');
 
+function loadPages (rows) {
+  return rows.map(itm => {
+    return {
+      id: itm.id,
+      content: itm.content,
+      location_id: itm.location_id,
+      taxonomy_id: itm.taxonomy_id,
+    }
+  });
+}
+
+
 module.exports = {
   Query: {
     page: (parent, args, context) => {

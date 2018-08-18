@@ -1,6 +1,5 @@
 const { gql } = require('apollo-server-express');
-module.exports = gql`
-  type Organization {
+const organizationFields = `
     id: String
     name: String
     alternate_name: String
@@ -11,19 +10,14 @@ module.exports = gql`
     tax_id: String
     year_incorporated: Int
     legal_status: String
-    services: [Service]
-    programs: [Program]
-  }
+`;
 
-  type Service {
-    id: String
+const serviceFields = `
     name: String
     alternate_name: String
     description: String
     email: String
     url: String
-    organization: Organization
-    program: Program
     status: String!
     interpretation_services: String
     application_process: String
@@ -31,8 +25,33 @@ module.exports = gql`
     fees: String
     accreditations: String
     licenses: String
+`;
+
+module.exports = gql`
+  type Organization {
+    ${organizationFields}
+    services: [Service]
+    programs: [Program]
+  }
+
+  input OrganizationInput {
+    # Name and description are required to create
+    ${organizationFields}
+  }
+
+  type Service {
+    id: String
+    ${serviceFields}
+    organization: Organization
+    program: Program
     taxonomies: [Taxonomy]
     locations: [Location]
+  }
+
+  input ServiceInput {
+    # Name and organization_id are required to create
+    ${serviceFields}
+    organization_id: String
   }
 
   type Program {
@@ -86,5 +105,9 @@ module.exports = gql`
     service_taxonomies: [ServiceTaxonomy]
     locations(type: String): [Location]
     services_at_location: [ServiceAtLocation]
+  }
+
+  type Mutation {
+    organization(id: String, org: OrganizationInput!): Organization
   }
 `;
