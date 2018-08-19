@@ -63,6 +63,27 @@ const updateOrCreate = function(args, type, tableName, allowed, required, loader
 
 module.exports = {
   Mutation: {
+    service_at_location: (parent, args, context) => {
+      const allowed = ['service_id', 'location_id', 'description'];
+      const required = ['service_id', 'location_id'];
+      return updateOrCreate(args, 'service_at_location', 'services_at_location', allowed, required, loadServicesAtLocation);
+    },
+    location: (parent, args, context) => {
+      const allowed = ['name', 'alternate_name', 'organization_id', 'description', 'transportation', 'latitude', 'longitude', 'type', 'parent_location_id'];
+      const required = [];
+      return updateOrCreate (args,'location', 'locations', allowed, required,loadLocations);
+    },
+    service_taxonomy: (parent, args, context) => {
+      const allowed = ['service_id', 'taxonomy_id', 'taxonomy_detail'];
+      const required = ['service_id', 'taxonomy_id'];
+      return updateOrCreate(args, 'service_taxonomy', 'service_taxonomies', allowed, required, loadServiceTaxonomies);
+    },
+    taxonomy: (parent, args, context) => {
+      const allowed = ['name', 'alternate_name', 'parent_name', 'parent_id', 'vocabulary'];
+      const required = ['name'];
+      // TODO: validate parent_name or load based on parent_name
+      return updateOrCreate (args,'taxonomy', 'taxonomies', allowed, required,loadTaxonomies);
+    },
     service: (parent, args, context) => {
       const allowed = ['name', 'alternate_name', 'description', 'url', 'email', 'status', 'organization_id', 'program_id', 'interpretation_services', 'application_process', 'wait_time', 'fees', 'accreditations', 'licenses' ];
       const required = ['name', 'organization_id', 'status'];
@@ -82,7 +103,13 @@ module.exports = {
   Query: {
     organizations: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from organizations')
+      let q = 'select * from organizations';
+      const qArgs = [];
+      if (args.ids && args.ids.length > 0) {
+        q += ' where id = ANY($1)';
+        qArgs.push(args.ids);
+      }
+      return cn.query(q, qArgs)
       .then (res => {
         if (res.rows.length > 0) {
           return loadOrganizations(res.rows);
@@ -93,6 +120,17 @@ module.exports = {
     },
     services: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
+      if (args.ids && args.ids.length > 0) {
+        let q = 'select * from services where id = ANY($1)';
+        return cn.query(q, [args.ids])
+        .then (res => {
+          if (res.rows.length > 0) {
+            return loadServices(res.rows);
+          }
+          return Promise.resolve(null);
+        })
+        .catch(error => Promise.reject(`Query error: ${error.message}`));        
+      }
       let taxNames = null; // taxonomies
       let locNames = null; // locations
       if (args.taxonomies && args.taxonomies.length > 0) {
@@ -135,7 +173,13 @@ module.exports = {
     },
     programs: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from programs')
+      let q = 'select * from programs';
+      let qArgs = [];
+      if (args.ids && args.ids.length > 0) {
+        q += ' where id = ANY($1)'
+        qArgs.push(args.ids);
+      }
+      return cn.query(q, qArgs)
       .then (res => {
         if (res.rows.length > 0) {
           return loadPrograms(res.rows);
@@ -146,7 +190,13 @@ module.exports = {
     },
     taxonomies: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from taxonomies')
+      let q = 'select * from taxonomies';
+      const qArgs = [];
+      if (args.ids && args.ids.length > 0) {
+        q += ' where id = ANY($1)';
+        qArgs.push(args.ids);
+      }
+      return cn.query(q, qArgs)
       .then (res => {
         if (res.rows.length > 0) {
           return loadTaxonomies(res.rows);
@@ -157,7 +207,13 @@ module.exports = {
     },
     service_taxonomies: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from service_taxonomies')
+      let q = 'select * from service_taxonomies';
+      const qArgs = [];
+      if (args.ids && args.ids.length > 0) {
+        q += ' where id = ANY($1)';
+        qArgs.push(args.ids);
+      }
+      return cn.query(q, qArgs)
       .then (res => {
         if (res.rows.length > 0) {
           return loadServiceTaxonomies(res.rows);
@@ -167,9 +223,20 @@ module.exports = {
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
     locations: (parent, args, context) => {
-      const query = (args.type) ? `select * from locations where type = '${args.type}'` : 'select * from locations';
-
       const cn = connectionManager.getConnection('aws');
+      if (args.ids && args.ids.length > 0) {
+        let q = 'select * from locations where id = ANY($1)';
+        return cn.query(q, [args.ids])
+        .then (res => {
+          if (res.rows.length > 0) {
+            return loadLocations(res.rows);
+          }
+          return Promise.resolve(null);
+        })
+        .catch(error => Promise.reject(`Query error: ${error.message}`));        
+      }
+
+      const query = (args.type) ? `select * from locations where type = '${args.type}'` : 'select * from locations';
       return cn.query(query)
       .then (res => {
         if (res.rows.length > 0) {
@@ -181,10 +248,16 @@ module.exports = {
     },
     services_at_location: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
-      return cn.query('select * from services_at_location')
+      let q = 'select * from services_at_location';
+      const qArgs = [];
+      if (args.ids && args.ids.length > 0) {
+        q += ' where id = ANY($1)';
+        qArgs.push(args.ids);
+      }
+      return cn.query(q, qArgs)
       .then (res => {
         if (res.rows.length > 0) {
-          return loadLocations(res.rows);
+          return loadServicesAtLocation(res.rows);
         }
         return Promise.resolve(null);
       })
@@ -258,12 +331,44 @@ module.exports = {
     },
 
   },
+  Taxonomy: {
+    parent: (parent, args, context) => {
+      if (parent.parent_id) {
+        const cn = connectionManager.getConnection('aws');
+        const q = `select * from taxonomies where id = ${parent.parent_id} limit 1`;
+        return cn.query(q)
+        .then(rows => {
+          if (res.rows.length === 1) return loadTaxonomies(res.rows);
+          return Promise.resolve(null);
+        })
+        .catch(error => Promise.reject(`Query error: ${error.message}`));
+      }
+      return null;
+    }
+  },
   Program: { // TBD
     organization: (parent, args, context) => {
+      if (parent.organization_id) {
+        const cn = connectionManager.getConnection('aws');
+        const q = `select * from organizations where id = ${parent.organization_id} limit 1`;
+        return cn.query(q)
+        .then(rows => {
+          if (res.rows.length === 1) return loadOrganizations(res.rows);
+          return Promise.resolve(null);
+        })
+        .catch(error => Promise.reject(`Query error: ${error.message}`));
+      }
       return null;
     },
     services: (parent, args, context) => {
-      return null;
+      const cn = connectionManager.getConnection('aws');
+      const q = `select * from services where organization_id = ${parent.id}`;
+      return cn.query(q)
+      .then(rows => {
+        if (res.rows.length >= 1) return loadServices(res.rows);
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
   },
 };
