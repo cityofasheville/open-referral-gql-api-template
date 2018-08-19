@@ -28,6 +28,12 @@ const serviceFields = `
     licenses: String
 `;
 
+const programFields = `
+    id: String
+    name: String
+    alternate_name: String
+`;
+
 module.exports = gql`
   type Organization {
     ${organizationFields}
@@ -55,12 +61,15 @@ module.exports = gql`
   }
 
   type Program {
-    id: String
-    name: String
-    alternate_name: String
-    organization_id: String
+    ${programFields}
     organization: Organization
     services: [Service]
+  }
+
+  input ProgramInput {
+    # Name and organization_id are required to create
+    ${programFields}
+    organization_id: String
   }
 
   type Taxonomy {
@@ -108,7 +117,32 @@ module.exports = gql`
   }
 
   type Mutation {
-    organization(id: String, org: OrganizationInput!): Organization
+    organization(id: String, organization: OrganizationInput!): Organization
+    program(id: String, program: ProgramInput!): Program
     service(id: String, service: ServiceInput!): Service
   }
 `;
+/*
+     name: 'programs',
+    name: 'taxonomies',
+    name: 'service_taxonomies',
+    name: 'locations',
+    name: 'services_at_location',
+    name: 'contacts',
+    name: 'phones',
+    name: 'physical_addresses',
+    name: 'postal_addresses',
+    name: 'regular_schedules',
+    name: 'holiday_schedules',
+    name: 'funding',
+    name: 'eligibility',
+    name: 'service_areas',
+    name: 'required_documents',
+    name: 'payments_accepted',
+    name: 'languages',
+    name: 'accessibility_for_disabilities',
+    name: 'metadata',
+    name: 'meta_table_descriptions',
+    name: 'pages',
+
+*/

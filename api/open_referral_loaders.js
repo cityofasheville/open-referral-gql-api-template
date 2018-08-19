@@ -50,7 +50,6 @@ module.exports = {
         id: itm.id,
         name: itm.name,
         alternate_name: itm.alternate_name,
-        organization_id: itm.organization_id,
         organization: null,
         services: [],
       };

@@ -2,12 +2,49 @@ const connectionManager = require('../common/connection_manager');
 const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
-const doit = function (q, qArgs, id, action, tableName, loader) {
+const updateOrCreate = function(args, type, tableName, allowed, required, loader) {
+  const thing = args[type];
+  const id = args.id ? args.id : (thing.id || uuid());
+  // You can't overwrite the ID field
+  let q = '';
+  const qArgs = [id];
+  let qCount = 2;
+
+  if (args.id) { // We are updating
+    let values = '';
+    let first = true;
+    Object.keys(thing).forEach(key => {
+      if (allowed.indexOf(key) >= 0) {
+        values += first ? '' : ', ';
+        first = false;
+        values += `${key} = $${qCount++}`;
+        qArgs.push(thing[key]);
+      }
+    });
+    q = `update ${tableName} set ${values} where id = $1`;
+  } else { // Creating a new object
+    required.forEach(itm => {
+      if (!thing[itm])
+        throw new Error(`You must specify ${itm} to create a ${type}`);
+    });
+    let names = 'id';
+    let values = '$1';
+
+    Object.keys(thing).forEach(key => {
+      if (allowed.indexOf(key) >= 0) {
+        names += `, ${key}`;
+        values += `, $${qCount++}`;
+        qArgs.push(thing[key]);
+      }
+    });
+    q = `insert into ${tableName} (${names}) values(${values})`;
+  }
+
   const cn = connectionManager.getConnection('aws');
   return cn.query(q, qArgs)
   .then(res => {
     if (res.rowCount != 1) {
-      throw new Error(`Error ${action}.`);
+      throw new Error(`Error ${args.id ? 'updating' : 'creating'} ${type}.`);
     }
     // Now get the record back
     return cn.query(`select * from ${tableName} where id='${id}'`)
@@ -22,90 +59,24 @@ const doit = function (q, qArgs, id, action, tableName, loader) {
     console.log(err);
     throw err;
   });
-
 }
+
 module.exports = {
   Mutation: {
     service: (parent, args, context) => {
-      const thing = args.service;
-      const cn = connectionManager.getConnection('aws');
-      const id = args.id ? args.id : (thing.id || uuid());
-      // You can't overwrite the ID field
       const allowed = ['name', 'alternate_name', 'description', 'url', 'email', 'status', 'organization_id', 'program_id', 'interpretation_services', 'application_process', 'wait_time', 'fees', 'accreditations', 'licenses' ];
-      let q = '';
-      const qArgs = [id];
-      let qCount = 2;
-
-      if (args.id) { // We are updating
-        let values = '';
-        let first = true;
-        Object.keys(thing).forEach(key => {
-          if (allowed.indexOf(key) >= 0) {
-            values += first ? '' : ', ';
-            first = false;
-            values += `${key} = $${qCount++}`;
-            qArgs.push(thing[key]);
-          }
-        });
-        q = `update services set ${values} where id = $1`;
-      } else { // Creating a new service
-        if (!thing.name || !thing.organization_id || ! thing.status) {
-          throw new Error('You must specify a name, organization_id and status to create a service');
-        }
-        let names = 'id';
-        let values = '$1';
-
-        Object.keys(thing).forEach(key => {
-          if (allowed.indexOf(key) >= 0) {
-            names += `, ${key}`;
-            values += `, $${qCount++}`;
-            qArgs.push(thing[key]);
-          }
-        });
-        q = `insert into services (${names}) values(${values})`;
-      }
-
-      return doit(q, qArgs, id, `${args.id ? 'updating' : 'creating'} service`, 'services', loadServices);
+      const required = ['name', 'organization_id', 'status'];
+      return updateOrCreate (args,'service', 'services', allowed, required,loadServices);
+    },
+    program: (parent, args, context) => {
+      const allowed = ['name', 'alternate_name', 'organization_id'];
+      const required = ['name', 'organization_id'];
+      return updateOrCreate (args,'program', 'programs', allowed, required, loadPrograms);
     },
     organization: (parent, args, context) => {
-      const thing = args.org;
-      const cn = connectionManager.getConnection('aws');
-      const id = args.id ? args.id : (thing.id || uuid());
-      // You can't overwrite the ID field
       const allowed = ['name', 'alternate_name', 'description', 'url', 'email', 'tax_status', 'tax_id', 'year_incorporated', 'legal_status'];
-      let q = '';
-      const qArgs = [id];
-      let qCount = 2;
-
-      if (args.id) { // We are updating
-        let values = '';
-        let first = true;
-        Object.keys(thing).forEach(key => {
-          if (allowed.indexOf(key) >= 0) {
-            values += first ? '' : ', ';
-            first = false;
-            values += `${key} = $${qCount++}`;
-            qArgs.push(thing[key]);
-          }
-        });
-        q = `update organizations set ${values} where id = $1`;
-      } else { // Creating a new organization
-        if (!thing.name || !thing.description) {
-          throw new Error('You must specify a name and a description to create an organization');
-        }
-        let names = 'id';
-        let values = '$1';
-
-        Object.keys(thing).forEach(key => {
-          if (allowed.indexOf(key) >= 0) {
-            names += `, ${key}`;
-            values += `, $${qCount++}`;
-            qArgs.push(thing[key]);
-          }
-        });
-        q = `insert into organizations (${names}) values(${values})`;
-      }
-      return doit(q, qArgs, id, `${args.id ? 'updating' : 'creating'} organization`, 'organizations', loadOrganizations);
+      const required = ['name', 'description'];
+      return updateOrCreate(args, 'organization', 'organizations', allowed, required, loadOrganizations);
     },
   },
   Query: {
