@@ -1,4 +1,21 @@
 module.exports = {
+  loadPhones: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        organization_id: itm.organization_id,
+        service_id: itm.service_id,
+        location_id: itm.location_id,
+        contact_id: itm.contact_id,
+        service_at_location_id: itm.service_at_location_id,
+        phone_number: itm.phone_number,
+        extension: itm.extension,
+        type: itm.type,
+        language: itm.language,
+        description: itm.description,
+      };
+    });
+  },
   loadContacts: function (rows) {
     return rows.map(itm => {
       return {

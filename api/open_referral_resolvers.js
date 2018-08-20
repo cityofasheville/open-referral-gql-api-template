@@ -1,5 +1,5 @@
 const connectionManager = require('../common/connection_manager');
-const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts } = require('./open_referral_loaders');
+const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, loadPhones } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
 const updateOrCreate = function(args, type, tableName, allowed, required, loader) {
@@ -80,17 +80,13 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 };
 
-  id: String
-  organization_id: String
-  service_id: String
-  service_at_location_id: String
-  name: String
-  title: String
-  department: String
-  email: String
-
 module.exports = {
   Mutation: {
+    phone: (parent, args, context) => {
+      const allowed = ['location_id', 'organization_id', 'service_id', 'contact_id', 'service_at_location_id', 'phone_number', 'extension', 'type', 'language', 'description'];
+      const required = ['phone_number'];
+      return updateOrCreate(args, 'phone', 'phones', allowed, required, loadPhones);
+    },
     contact: (parent, args, context) => {
       const allowed = ['organization_id', 'service_id', 'service_at_location_id', 'name', 'title', 'department', 'email'];
       const required = [];
@@ -212,6 +208,9 @@ module.exports = {
     },
     contacts: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'contacts', loadContacts);
+    },
+    phones: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'phones', loadPhones);
     }
   },
   Organization: {

@@ -81,6 +81,20 @@ const contactFields = `
   email: String
 `;
 
+const phoneFields = `
+  id: String
+  location_id: String
+  service_id: String
+  organization_id: String
+  contact_id: String
+  service_at_location_id: String
+  phone_number: Int
+  extension: Int
+  type: String
+  language:  String
+  description: String
+`;
+
 module.exports = gql`
   type Organization {
     ${organizationFields}
@@ -161,6 +175,15 @@ module.exports = gql`
     ${contactFields}
   }
 
+  type Phone {
+    ${phoneFields}
+  }
+
+  input PhoneInput {
+    # phone_number is required to create
+    ${phoneFields}
+  }
+
   type Query {
     "This is documentation"
     organizations(ids: [String]): [Organization]
@@ -171,6 +194,7 @@ module.exports = gql`
     locations(ids: [String], type: String): [Location]
     services_at_location(ids: [String]): [ServiceAtLocation]
     contacts(ids: [String]): [Contact]
+    phones(ids: [String]): [Phone]
   }
 
   type Mutation {
@@ -182,11 +206,11 @@ module.exports = gql`
     location(id: String, location: LocationInput!): Location
     service_at_location(id: String, service_at_location: ServiceAtLocationInput!): ServiceAtLocation
     contact(id: String, contact: ContactInput!): Contact
+    phone(id: String, phone: PhoneInput!): Phone
   }
 `;
 /*
 Queries+mutations to do:
-    phones
     physical_addresses
     postal_addresses
     regular_schedules
