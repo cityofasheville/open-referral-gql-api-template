@@ -1,5 +1,5 @@
 const connectionManager = require('../common/connection_manager');
-const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation } = require('./open_referral_loaders');
+const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
 const updateOrCreate = function(args, type, tableName, allowed, required, loader) {
@@ -61,8 +61,41 @@ const updateOrCreate = function(args, type, tableName, allowed, required, loader
   });
 }
 
+const simpleObjectsEndpoint = function(args, tableName, loader) {
+      const cn = connectionManager.getConnection('aws');
+      let q = `select * from ${tableName}`;
+      const qArgs = [];
+      if (args.ids && args.ids.length > 0) {
+        q += ' where id = ANY($1)';
+        qArgs.push(args.ids);
+      }
+      return cn.query(q, qArgs)
+      .then (res => {
+        if (res.rows.length > 0) {
+          return loader(res.rows);
+        }
+        return Promise.resolve(null);
+      })
+      .catch(error => Promise.reject(`Query error: ${error.message}`));
+
+};
+
+  id: String
+  organization_id: String
+  service_id: String
+  service_at_location_id: String
+  name: String
+  title: String
+  department: String
+  email: String
+
 module.exports = {
   Mutation: {
+    contact: (parent, args, context) => {
+      const allowed = ['organization_id', 'service_id', 'service_at_location_id', 'name', 'title', 'department', 'email'];
+      const required = [];
+      return updateOrCreate(args, 'contact', 'contacts', allowed, required, loadContacts);
+    },
     service_at_location: (parent, args, context) => {
       const allowed = ['service_id', 'location_id', 'description'];
       const required = ['service_id', 'location_id'];
@@ -102,34 +135,12 @@ module.exports = {
   },
   Query: {
     organizations: (parent, args, context) => {
-      const cn = connectionManager.getConnection('aws');
-      let q = 'select * from organizations';
-      const qArgs = [];
-      if (args.ids && args.ids.length > 0) {
-        q += ' where id = ANY($1)';
-        qArgs.push(args.ids);
-      }
-      return cn.query(q, qArgs)
-      .then (res => {
-        if (res.rows.length > 0) {
-          return loadOrganizations(res.rows);
-        }
-        return Promise.resolve(null);
-      })
-      .catch(error => Promise.reject(`Query error: ${error.message}`));
+      return simpleObjectsEndpoint(args, 'organizations', loadOrganizations);
     },
     services: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
       if (args.ids && args.ids.length > 0) {
-        let q = 'select * from services where id = ANY($1)';
-        return cn.query(q, [args.ids])
-        .then (res => {
-          if (res.rows.length > 0) {
-            return loadServices(res.rows);
-          }
-          return Promise.resolve(null);
-        })
-        .catch(error => Promise.reject(`Query error: ${error.message}`));        
+        return simpleObjectsEndpoint(args, 'services', loadServices);   
       }
       let taxNames = null; // taxonomies
       let locNames = null; // locations
@@ -172,68 +183,18 @@ module.exports = {
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
     programs: (parent, args, context) => {
-      const cn = connectionManager.getConnection('aws');
-      let q = 'select * from programs';
-      let qArgs = [];
-      if (args.ids && args.ids.length > 0) {
-        q += ' where id = ANY($1)'
-        qArgs.push(args.ids);
-      }
-      return cn.query(q, qArgs)
-      .then (res => {
-        if (res.rows.length > 0) {
-          return loadPrograms(res.rows);
-        }
-        return Promise.resolve(null);
-      })
-      .catch(error => Promise.reject(`Query error: ${error.message}`));
+      return simpleObjectsEndpoint(args, 'programs', loadPrograms);
     },
     taxonomies: (parent, args, context) => {
-      const cn = connectionManager.getConnection('aws');
-      let q = 'select * from taxonomies';
-      const qArgs = [];
-      if (args.ids && args.ids.length > 0) {
-        q += ' where id = ANY($1)';
-        qArgs.push(args.ids);
-      }
-      return cn.query(q, qArgs)
-      .then (res => {
-        if (res.rows.length > 0) {
-          return loadTaxonomies(res.rows);
-        }
-        return Promise.resolve(null);
-      })
-      .catch(error => Promise.reject(`Query error: ${error.message}`));
+      return simpleObjectsEndpoint(args, 'taxonomies', loadTaxonomies);
     },
     service_taxonomies: (parent, args, context) => {
-      const cn = connectionManager.getConnection('aws');
-      let q = 'select * from service_taxonomies';
-      const qArgs = [];
-      if (args.ids && args.ids.length > 0) {
-        q += ' where id = ANY($1)';
-        qArgs.push(args.ids);
-      }
-      return cn.query(q, qArgs)
-      .then (res => {
-        if (res.rows.length > 0) {
-          return loadServiceTaxonomies(res.rows);
-        }
-        return Promise.resolve(null);
-      })
-      .catch(error => Promise.reject(`Query error: ${error.message}`));
+      return simpleObjectsEndpoint(args, 'service_taxonomies', loadServiceTaxonomies);
     },
     locations: (parent, args, context) => {
       const cn = connectionManager.getConnection('aws');
       if (args.ids && args.ids.length > 0) {
-        let q = 'select * from locations where id = ANY($1)';
-        return cn.query(q, [args.ids])
-        .then (res => {
-          if (res.rows.length > 0) {
-            return loadLocations(res.rows);
-          }
-          return Promise.resolve(null);
-        })
-        .catch(error => Promise.reject(`Query error: ${error.message}`));        
+        return simpleObjectsEndpoint(args, 'locations', loadLocations);     
       }
 
       const query = (args.type) ? `select * from locations where type = '${args.type}'` : 'select * from locations';
@@ -247,22 +208,11 @@ module.exports = {
       .catch(error => Promise.reject(`Query error: ${error.message}`));
     },
     services_at_location: (parent, args, context) => {
-      const cn = connectionManager.getConnection('aws');
-      let q = 'select * from services_at_location';
-      const qArgs = [];
-      if (args.ids && args.ids.length > 0) {
-        q += ' where id = ANY($1)';
-        qArgs.push(args.ids);
-      }
-      return cn.query(q, qArgs)
-      .then (res => {
-        if (res.rows.length > 0) {
-          return loadServicesAtLocation(res.rows);
-        }
-        return Promise.resolve(null);
-      })
-      .catch(error => Promise.reject(`Query error: ${error.message}`));
+      return simpleObjectsEndpoint(args, 'services_at_location', loadServicesAtLocation);
     },
+    contacts: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'contacts', loadContacts);
+    }
   },
   Organization: {
     services: (parent, args, context) => {

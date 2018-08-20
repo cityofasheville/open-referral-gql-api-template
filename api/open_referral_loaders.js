@@ -1,4 +1,18 @@
 module.exports = {
+  loadContacts: function (rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        organization_id: itm.organization_id,
+        service_id: itm.service_id,
+        service_at_location_id: itm.service_at_location_id,
+        name: itm.name,
+        title: itm.title,
+        department: itm.department,
+        email: itm.email,
+      }
+    });
+  },
   loadServicesAtLocation: function (rows) {
     return rows.map(itm => {
       return {
