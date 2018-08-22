@@ -95,6 +95,18 @@ const phoneFields = `
   description: String
 `;
 
+const physicalAddressFields = `
+  id: String
+  location_id: String
+  attention: String
+  address_1: String
+  city: String
+  region: String
+  state_province: String
+  postal_code: String
+  country: String
+`;
+
 module.exports = gql`
   type Organization {
     ${organizationFields}
@@ -184,6 +196,16 @@ module.exports = gql`
     ${phoneFields}
   }
 
+  type PhysicalAddress {
+    ${physicalAddressFields}
+  }
+
+  input PhysicalAddressInput {
+    # address_1, city, state_province, postal_code and country all required to create
+    ${physicalAddressFields}
+  }
+
+
   type Query {
     "This is documentation"
     organizations(ids: [String]): [Organization]
@@ -195,6 +217,7 @@ module.exports = gql`
     services_at_location(ids: [String]): [ServiceAtLocation]
     contacts(ids: [String]): [Contact]
     phones(ids: [String]): [Phone]
+    physical_addresses(ids: [String]): [PhysicalAddress]
   }
 
   type Mutation {
@@ -207,6 +230,7 @@ module.exports = gql`
     service_at_location(id: String, service_at_location: ServiceAtLocationInput!): ServiceAtLocation
     contact(id: String, contact: ContactInput!): Contact
     phone(id: String, phone: PhoneInput!): Phone
+    physical_address(id: String, physical_address: PhysicalAddressInput!): PhysicalAddress
   }
 `;
 /*

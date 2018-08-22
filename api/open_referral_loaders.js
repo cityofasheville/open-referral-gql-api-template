@@ -1,4 +1,19 @@
 module.exports = {
+  loadPhysicalAddresses: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        location_id: itm.location_id,
+        attention: itm.attention,
+        address_1: itm.address_1,
+        city: itm.city,
+        region: itm.region,
+        state_province: itm.state_province,
+        postal_code: itm.postal_code,
+        country: itm.country,
+      };
+    });
+  },
   loadPhones: function(rows) {
     return rows.map(itm => {
       return {
