@@ -1,4 +1,5 @@
 const { gql } = require('apollo-server-express');
+
 const organizationFields = `
   id: String
   name: String
@@ -10,6 +11,19 @@ const organizationFields = `
   tax_id: String
   year_incorporated: Int
   legal_status: String
+`;
+
+let schema = `
+  type Organization {
+    ${organizationFields}
+    services: [Service]
+    programs: [Program]
+  }
+
+  input OrganizationInput {
+    # Name and description are required to create
+    ${organizationFields}
+  }
 `;
 
 const serviceFields = `
@@ -29,10 +43,39 @@ const serviceFields = `
   licenses: String
 `;
 
+schema += `
+  type Service {
+    ${serviceFields}
+    organization: Organization
+    program: Program
+    taxonomies: [Taxonomy]
+    locations: [Location]
+  }
+
+  input ServiceInput {
+    # Name, status and organization_id are required to create
+    ${serviceFields}
+  }
+`;
+
 const programFields = `
   id: String
   name: String
   alternate_name: String
+`;
+
+schema += `
+  type Program {
+    ${programFields}
+    organization: Organization
+    services: [Service]
+  }
+
+  input ProgramInput {
+    # Name and organization_id are required to create
+    ${programFields}
+    organization_id: String
+  }
 `;
 
 const taxonomyFields = `
@@ -43,11 +86,32 @@ const taxonomyFields = `
   vocabulary: String
 `;
 
+schema += `
+  type Taxonomy {
+    ${taxonomyFields}
+    parent: Taxonomy
+  }
+
+  input TaxonomyInput {
+    ${taxonomyFields}
+  }
+`;
+
 const serviceTaxonomyFields = `
   id: String
   service_id: String
   taxonomy_id: String
   taxonomy_detail: String
+`;
+
+schema += `
+  type ServiceTaxonomy {
+    ${serviceTaxonomyFields}
+  }
+
+  input ServiceTaxonomyInput {
+    ${serviceTaxonomyFields}
+  }
 `;
 
 const locationFields = `
@@ -63,11 +127,32 @@ const locationFields = `
   longitude: Float
 `;
 
+schema += `
+  type Location {
+    ${locationFields}
+    organization: Organization
+  }
+
+  input LocationInput {
+    ${locationFields}
+  }
+`;
+
 const serviceAtLocationFields = `
   id: String
   service_id: String
   location_id: String
   description: String
+`;
+
+schema += `
+  type ServiceAtLocation {
+    ${serviceAtLocationFields}
+  }
+
+  input ServiceAtLocationInput {
+    ${serviceAtLocationFields}
+  }
 `;
 
 const contactFields = `
@@ -79,6 +164,17 @@ const contactFields = `
   title: String
   department: String
   email: String
+`;
+
+schema += `
+  type Contact {
+    ${contactFields}
+  }
+
+  input ContactInput {
+    # No required fields
+    ${contactFields}
+  }
 `;
 
 const phoneFields = `
@@ -95,6 +191,17 @@ const phoneFields = `
   description: String
 `;
 
+schema += `
+  type Phone {
+    ${phoneFields}
+  }
+
+  input PhoneInput {
+    # phone_number is required to create
+    ${phoneFields}
+  }
+`;
+
 const physicalAddressFields = `
   id: String
   location_id: String
@@ -107,95 +214,7 @@ const physicalAddressFields = `
   country: String
 `;
 
-module.exports = gql`
-  type Organization {
-    ${organizationFields}
-    services: [Service]
-    programs: [Program]
-  }
-
-  input OrganizationInput {
-    # Name and description are required to create
-    ${organizationFields}
-  }
-
-  type Service {
-    ${serviceFields}
-    organization: Organization
-    program: Program
-    taxonomies: [Taxonomy]
-    locations: [Location]
-  }
-
-  input ServiceInput {
-    # Name, status and organization_id are required to create
-    ${serviceFields}
-  }
-
-  type Program {
-    ${programFields}
-    organization: Organization
-    services: [Service]
-  }
-
-  input ProgramInput {
-    # Name and organization_id are required to create
-    ${programFields}
-    organization_id: String
-  }
-
-  type Taxonomy {
-    ${taxonomyFields}
-    parent: Taxonomy
-  }
-
-  input TaxonomyInput {
-    ${taxonomyFields}
-  }
-
-  type ServiceTaxonomy {
-    ${serviceTaxonomyFields}
-  }
-
-  input ServiceTaxonomyInput {
-    ${serviceTaxonomyFields}
-  }
-
-  type Location {
-    ${locationFields}
-    organization: Organization
-  }
-
-  input LocationInput {
-    ${locationFields}
-  }
-
-  type ServiceAtLocation {
-    ${serviceAtLocationFields}
-  }
-
-  input ServiceAtLocationInput {
-    ${serviceAtLocationFields}
-  }
-
-  type Contact {
-    ${contactFields}
-  }
-
-  input ContactInput {
-    # No required fields
-    ${contactFields}
-  }
-
-  type Phone {
-    ${phoneFields}
-  }
-
-  input PhoneInput {
-    # phone_number is required to create
-    ${phoneFields}
-  }
-
+schema += `
   type PhysicalAddress {
     ${physicalAddressFields}
   }
@@ -204,7 +223,9 @@ module.exports = gql`
     # address_1, city, state_province, postal_code and country all required to create
     ${physicalAddressFields}
   }
+`;
 
+schema += `
 
   type Query {
     "This is documentation"
@@ -233,6 +254,8 @@ module.exports = gql`
     physical_address(id: String, physical_address: PhysicalAddressInput!): PhysicalAddress
   }
 `;
+module.exports = gql`${schema}`;
+
 /*
 Queries+mutations to do:
     physical_addresses
