@@ -1,4 +1,32 @@
 module.exports = {
+  loadRegularSchedules: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        location_id: itm.location_id,
+        service_id: itm.service_id,
+        service_at_location_id: itm.service_at_location_id,
+        opens_at: itm.opens_at,
+        closes_at: itm.closes_at,
+        weekday: itm.weekday,
+      };
+    });
+  },
+  loadHolidaySchedules: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        location_id: itm.location_id,
+        service_id: itm.service_id,
+        service_at_location_id: itm.service_at_location_id,
+        opens_at: itm.opens_at,
+        closes_at: itm.closes_at,
+        closed: itm.closed,
+        start_date: itm.start_date,
+        end_date: itm.end_date,
+      };
+    });
+  },
   loadAddresses: function(rows) {
     return rows.map(itm => {
       return {

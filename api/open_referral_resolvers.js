@@ -1,5 +1,8 @@
 const connectionManager = require('../common/connection_manager');
-const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, loadPhones, loadAddresses } = require('./open_referral_loaders');
+const { loadOrganizations, loadServices, loadPrograms, loadTaxonomies, 
+        loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, 
+        loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules
+} = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
 const updateOrCreate = function(args, type, tableName, allowed, required, loader) {
@@ -82,6 +85,16 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 module.exports = {
   Mutation: {
+    regular_schedule: (parent, args, context) => {
+      const allowed = ['id', 'location_id', 'service_id', 'service_at_location_id', 'opens_at', 'closes_at', 'weekday'];
+      const required = ['weekday'];
+      return updateOrCreate(args, 'regular_schedule', 'regular_schedules', allowed, required, loadAddresses);
+    },
+    holiday_schedule: (parent, args, context) => {
+      const allowed = ['id', 'location_id', 'service_id', 'service_at_location_id', 'opens_at', 'closes_at', 'closed', 'start_date', 'end_date'];
+      const required = ['closed', 'start_date', 'end_date'];
+      return updateOrCreate(args, 'holiday_schedule', 'holiday_schedules', allowed, required, loadAddresses);
+    },
     physical_address: (parent, args, context) => {
       const allowed = ['id', 'location_id', 'attention', 'address_1', 'city', 'region', 'state_province', 'postal_code', 'country'];
       const required = ['address_1', 'city', 'state_province', 'postal_code', 'country'];
@@ -227,7 +240,13 @@ module.exports = {
     },
     postal_addresses: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'postal_addresses', loadAddresses);
-    }
+    },
+    regular_schedules: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'regular_schedules', loadRegularSchedules);
+    },
+    holiday_schedules: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'holiday_schedules', loadHolidaySchedules);
+    },
   },
   Organization: {
     services: (parent, args, context) => {

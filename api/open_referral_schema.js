@@ -234,6 +234,44 @@ schema += `
   }
 `;
 
+const scheduleFields = `
+  id: String
+  service_id: String
+  location_id: String
+  service_at_location_id: String
+  opens_at: String
+  closes_at: String
+`;
+
+schema += `
+  type RegularSchedule {
+    ${scheduleFields}
+    weekday: Int
+  }
+
+  input RegularScheduleInput {
+    # weekday required to create
+    ${scheduleFields}
+    weekday: Int
+  }
+`;
+
+schema +=`
+  type HolidaySchedule {
+    ${scheduleFields}
+    closed: Boolean
+    start_date: String
+    end_date: String
+  }
+
+  input HolidayScheduleInput {
+    # closed, start_date and end_date are required to create
+    ${scheduleFields}
+    closed: Boolean
+    start_date: String
+    end_date: String
+  }
+`;
 
 schema += `
 
@@ -250,6 +288,8 @@ schema += `
     phones(ids: [String]): [Phone]
     physical_addresses(ids: [String]): [PhysicalAddress]
     postal_addresses(ids: [String]): [PhysicalAddress]
+    regular_schedules(ids: [String]): [RegularSchedule]
+    holiday_schedules(ids: [String]): [HolidaySchedule]
   }
 
   type Mutation {
@@ -262,16 +302,17 @@ schema += `
     service_at_location(id: String, service_at_location: ServiceAtLocationInput!): ServiceAtLocation
     contact(id: String, contact: ContactInput!): Contact
     phone(id: String, phone: PhoneInput!): Phone
-    physical_address(id: String, physical_address: PhysicalAddressInput!): PhysicalAddress
-    postal_address(id: String, postal_address: PostalAddressInput!): PostalAddress
+    physical_address(id: String, address: PhysicalAddressInput!): PhysicalAddress
+    postal_address(id: String, address: PostalAddressInput!): PostalAddress
+    regular_schedule(id: String, schedule: RegularScheduleInput!): RegularSchedule
+    holiday_schedule(id: String, schedule: HolidayScheduleInput!): HolidaySchedule
+
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    regular_schedules
-    holiday_schedules
     funding
     eligibility
     service_areas
