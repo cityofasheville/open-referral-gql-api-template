@@ -1,5 +1,5 @@
 module.exports = {
-  loadPhysicalAddresses: function(rows) {
+  loadAddresses: function(rows) {
     return rows.map(itm => {
       return {
         id: itm.id,

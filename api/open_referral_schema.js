@@ -202,7 +202,7 @@ schema += `
   }
 `;
 
-const physicalAddressFields = `
+const addressFields = `
   id: String
   location_id: String
   attention: String
@@ -216,14 +216,24 @@ const physicalAddressFields = `
 
 schema += `
   type PhysicalAddress {
-    ${physicalAddressFields}
+    ${addressFields}
   }
 
   input PhysicalAddressInput {
     # address_1, city, state_province, postal_code and country all required to create
-    ${physicalAddressFields}
+    ${addressFields}
+  }
+
+  type PostalAddress {
+    ${addressFields}
+  }
+
+  input PostalAddressInput {
+    # address_1, city, state_province, postal_code and country all required to create
+    ${addressFields}
   }
 `;
+
 
 schema += `
 
@@ -239,6 +249,7 @@ schema += `
     contacts(ids: [String]): [Contact]
     phones(ids: [String]): [Phone]
     physical_addresses(ids: [String]): [PhysicalAddress]
+    postal_addresses(ids: [String]): [PhysicalAddress]
   }
 
   type Mutation {
@@ -252,14 +263,13 @@ schema += `
     contact(id: String, contact: ContactInput!): Contact
     phone(id: String, phone: PhoneInput!): Phone
     physical_address(id: String, physical_address: PhysicalAddressInput!): PhysicalAddress
+    postal_address(id: String, postal_address: PostalAddressInput!): PostalAddress
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    physical_addresses
-    postal_addresses
     regular_schedules
     holiday_schedules
     funding

@@ -1,5 +1,5 @@
 const connectionManager = require('../common/connection_manager');
-const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, loadPhones, loadPhysicalAddresses } = require('./open_referral_loaders');
+const {loadOrganizations, loadServices, loadPrograms, loadTaxonomies, loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, loadPhones, loadAddresses } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
 const updateOrCreate = function(args, type, tableName, allowed, required, loader) {
@@ -85,7 +85,12 @@ module.exports = {
     physical_address: (parent, args, context) => {
       const allowed = ['id', 'location_id', 'attention', 'address_1', 'city', 'region', 'state_province', 'postal_code', 'country'];
       const required = ['address_1', 'city', 'state_province', 'postal_code', 'country'];
-      return updateOrCreate(args, 'physical_address', 'physical_addresses', allowed, required, loadPhysicalAddresses);
+      return updateOrCreate(args, 'physical_address', 'physical_addresses', allowed, required, loadAddresses);
+    },
+    postal_address: (parent, args, context) => {
+      const allowed = ['id', 'location_id', 'attention', 'address_1', 'city', 'region', 'state_province', 'postal_code', 'country'];
+      const required = ['address_1', 'city', 'state_province', 'postal_code', 'country'];
+      return updateOrCreate(args, 'postal_address', 'postal_addresses', allowed, required, loadAddresses);
     },
     phone: (parent, args, context) => {
       const allowed = ['location_id', 'organization_id', 'service_id', 'contact_id', 'service_at_location_id', 'phone_number', 'extension', 'type', 'language', 'description'];
@@ -218,7 +223,10 @@ module.exports = {
       return simpleObjectsEndpoint(args, 'phones', loadPhones);
     },
     physical_addresses: (parent, args, context) => {
-      return simpleObjectsEndpoint(args, 'physical_addresses', loadPhysicalAddresses);
+      return simpleObjectsEndpoint(args, 'physical_addresses', loadAddresses);
+    },
+    postal_addresses: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'postal_addresses', loadAddresses);
     }
   },
   Organization: {
