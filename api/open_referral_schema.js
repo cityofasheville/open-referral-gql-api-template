@@ -273,6 +273,23 @@ schema +=`
   }
 `;
 
+const fundingFields = `
+  id: String
+  organization_id: String
+  service_id: String
+  source: String
+`;
+
+schema += `
+  type Funding {
+    ${fundingFields}
+  }
+
+  input FundingInput {
+    ${fundingFields}
+  }
+`;
+
 schema += `
 
   type Query {
@@ -290,6 +307,7 @@ schema += `
     postal_addresses(ids: [String]): [PhysicalAddress]
     regular_schedules(ids: [String]): [RegularSchedule]
     holiday_schedules(ids: [String]): [HolidaySchedule]
+    fundings(ids: [String]): [Funding]
   }
 
   type Mutation {
@@ -306,7 +324,7 @@ schema += `
     postal_address(id: String, address: PostalAddressInput!): PostalAddress
     regular_schedule(id: String, schedule: RegularScheduleInput!): RegularSchedule
     holiday_schedule(id: String, schedule: HolidayScheduleInput!): HolidaySchedule
-
+    funding(id: String, funding: FundingInput!): Funding
   }
 `;
 module.exports = gql`${schema}`;

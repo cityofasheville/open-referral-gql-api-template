@@ -1,4 +1,14 @@
 module.exports = {
+  loadFunding: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        organization_id: itm.organization_id,
+        service_id: itm.service_id,
+        source: itm.source,
+      }
+    });
+  },
   loadRegularSchedules: function(rows) {
     return rows.map(itm => {
       return {

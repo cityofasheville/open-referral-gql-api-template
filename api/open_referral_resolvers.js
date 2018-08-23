@@ -1,7 +1,8 @@
 const connectionManager = require('../common/connection_manager');
 const { loadOrganizations, loadServices, loadPrograms, loadTaxonomies, 
         loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, 
-        loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules
+        loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules,
+        loadFunding
 } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
@@ -85,6 +86,11 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 module.exports = {
   Mutation: {
+    regular_schedule: (parent, args, context) => {
+      const allowed = ['id', 'organization_id', 'service_id', 'source'];
+      const required = [];
+      return updateOrCreate(args, 'funding', 'funding', allowed, required, loadFunding);
+    },
     regular_schedule: (parent, args, context) => {
       const allowed = ['id', 'location_id', 'service_id', 'service_at_location_id', 'opens_at', 'closes_at', 'weekday'];
       const required = ['weekday'];
@@ -246,6 +252,9 @@ module.exports = {
     },
     holiday_schedules: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'holiday_schedules', loadHolidaySchedules);
+    },
+    fundings: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'funding', loadFunding);
     },
   },
   Organization: {
