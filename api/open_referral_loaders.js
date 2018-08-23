@@ -1,4 +1,13 @@
 module.exports = {
+  loadEligibilty: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        service_id: itm.service_id,
+        eligibility: itm.source,
+      }
+    });
+  },
   loadFunding: function(rows) {
     return rows.map(itm => {
       return {
