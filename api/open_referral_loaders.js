@@ -1,4 +1,13 @@
 module.exports = {
+  loadRequiredDocuments: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        service_id: itm.service_id,
+        document: itm.document,
+      }
+    });
+  },
   loadServiceAreas: function(rows) {
     return rows.map(itm => {
       return {

@@ -303,7 +303,6 @@ schema += `
     eligibility: String
   }
 `;
-
 schema += `
   type ServiceArea {
     id: String
@@ -316,6 +315,20 @@ schema += `
     service_id: String
     service_area: String
     description: String
+  }
+`;
+
+
+schema += `
+  type RequiredDocument {
+    id: String
+    service_id: String
+    document: String
+  }
+  input RequiredDocumentInput {
+    id: String
+    service_id: String
+    document: String
   }
 `;
 
@@ -339,6 +352,7 @@ schema += `
     fundings(ids: [String]): [Funding]
     eligibility(ids: [String]): [Eligibility]
     service_areas(ids: [String]): [ServiceArea]
+    required_documents(ids: [String]): [RequiredDocument]
   }
 
   type Mutation {
@@ -358,6 +372,7 @@ schema += `
     funding(id: String, funding: FundingInput!): Funding
     eligibility(id: String, eligibility: EligibilityInput!): Eligibility
     service_area(id: String, service_area: ServiceAreaInput!): ServiceArea
+    required_document(id: String, required_document: RequiredDocumentInput!): RequiredDocument
   }
 `;
 module.exports = gql`${schema}`;
