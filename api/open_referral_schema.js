@@ -318,7 +318,6 @@ schema += `
   }
 `;
 
-
 schema += `
   type RequiredDocument {
     id: String
@@ -329,6 +328,19 @@ schema += `
     id: String
     service_id: String
     document: String
+  }
+`;
+
+schema += `
+  type PaymentAccepted {
+    id: String
+    service_id: String
+    payment: String
+  }
+  input PaymentAcceptedInput {
+    id: String
+    service_id: String
+    payment: String
   }
 `;
 
@@ -353,6 +365,7 @@ schema += `
     eligibility(ids: [String]): [Eligibility]
     service_areas(ids: [String]): [ServiceArea]
     required_documents(ids: [String]): [RequiredDocument]
+    payments_accepted(ids: [String]): [PaymentAccepted]
   }
 
   type Mutation {
@@ -373,14 +386,13 @@ schema += `
     eligibility(id: String, eligibility: EligibilityInput!): Eligibility
     service_area(id: String, service_area: ServiceAreaInput!): ServiceArea
     required_document(id: String, required_document: RequiredDocumentInput!): RequiredDocument
+    payment_accepted(id: String, payment_accepted: PaymentAcceptedInput!): PaymentAccepted
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    required_documents
-    payments_accepted
     languages
     accessibility_for_disabilities
     metadata

@@ -2,7 +2,8 @@ const connectionManager = require('../common/connection_manager');
 const { loadOrganizations, loadServices, loadPrograms, loadTaxonomies, 
         loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, 
         loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules,
-        loadFunding, loadEligibility, loadServiceAreas, loadRequiredDocuments
+        loadFunding, loadEligibility, loadServiceAreas, loadRequiredDocuments,
+        loadPaymentsAccepted
 } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
@@ -86,6 +87,11 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 module.exports = {
   Mutation: {
+    payment_accepted: (parent, args, context) => {
+      const allowed = ['id', 'service_id', 'payment'];
+      const required = [];
+      return updateOrCreate(args, 'payment_accepted', 'payments_accepted', allowed, required, loadRequiredDocuments);
+    },
     required_document: (parent, args, context) => {
       const allowed = ['id', 'service_id', 'document'];
       const required = [];
@@ -279,6 +285,9 @@ module.exports = {
     },
     required_documents: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'required_documents', loadRequiredDocuments);
+    },
+    payments_accepted: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'payments_accepted', loadPaymentsAccepted);
     },
   },
   Organization: {

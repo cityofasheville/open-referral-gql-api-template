@@ -1,4 +1,13 @@
 module.exports = {
+  loadPaymentsAccepted: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        service_id: itm.service_id,
+        payment: itm.payment,
+      }
+    });
+  },
   loadRequiredDocuments: function(rows) {
     return rows.map(itm => {
       return {
