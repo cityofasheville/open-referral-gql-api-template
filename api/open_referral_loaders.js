@@ -1,5 +1,15 @@
 module.exports = {
-  loadEligibilty: function(rows) {
+  loadServiceAreas: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        service_id: itm.service_id,
+        service_area: itm.service_area,
+        description: itm.description,
+      }
+    });
+  },
+  loadEligibility: function(rows) {
     return rows.map(itm => {
       return {
         id: itm.id,

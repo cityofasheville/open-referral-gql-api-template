@@ -2,7 +2,7 @@ const connectionManager = require('../common/connection_manager');
 const { loadOrganizations, loadServices, loadPrograms, loadTaxonomies, 
         loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, 
         loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules,
-        loadFunding, loadEligibilty
+        loadFunding, loadEligibility, loadServiceAreas
 } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
@@ -86,6 +86,11 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 module.exports = {
   Mutation: {
+    service_area: (parent, args, context) => {
+      const allowed = ['id', 'service_id', 'service_area', 'description'];
+      const required = [];
+      return updateOrCreate(args, 'service_area', 'service_areas', allowed, required, loadServiceAreas);
+    },
     eligibility: (parent, args, context) => {
       const allowed = ['id', 'service_id', 'eligibility'];
       const required = [];
@@ -263,6 +268,9 @@ module.exports = {
     },
     eligibility: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'eligibility', loadEligibilty);
+    },
+    service_areas: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'service_areas', loadServiceAreas);
     },
   },
   Organization: {

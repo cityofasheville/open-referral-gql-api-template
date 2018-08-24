@@ -305,6 +305,21 @@ schema += `
 `;
 
 schema += `
+  type ServiceArea {
+    id: String
+    service_id: String
+    service_area: String
+    description: String
+  }
+  input ServiceAreaInput {
+    id: String
+    service_id: String
+    service_area: String
+    description: String
+  }
+`;
+
+schema += `
 
   type Query {
     "This is documentation"
@@ -323,6 +338,7 @@ schema += `
     holiday_schedules(ids: [String]): [HolidaySchedule]
     fundings(ids: [String]): [Funding]
     eligibility(ids: [String]): [Eligibility]
+    service_areas(ids: [String]): [ServiceArea]
   }
 
   type Mutation {
@@ -341,14 +357,13 @@ schema += `
     holiday_schedule(id: String, schedule: HolidayScheduleInput!): HolidaySchedule
     funding(id: String, funding: FundingInput!): Funding
     eligibility(id: String, eligibility: EligibilityInput!): Eligibility
+    service_area(id: String, service_area: ServiceAreaInput!): ServiceArea
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    eligibility
-    service_areas
     required_documents
     payments_accepted
     languages
