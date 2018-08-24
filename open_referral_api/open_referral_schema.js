@@ -358,7 +358,7 @@ schema += `
     contacts(ids: [String]): [Contact]
     phones(ids: [String]): [Phone]
     physical_addresses(ids: [String]): [PhysicalAddress]
-    postal_addresses(ids: [String]): [PhysicalAddress]
+    postal_addresses(ids: [String]): [PostalAddress]
     regular_schedules(ids: [String]): [RegularSchedule]
     holiday_schedules(ids: [String]): [HolidaySchedule]
     fundings(ids: [String]): [Funding]
@@ -378,8 +378,8 @@ schema += `
     service_at_location(id: String, service_at_location: ServiceAtLocationInput!): ServiceAtLocation
     contact(id: String, contact: ContactInput!): Contact
     phone(id: String, phone: PhoneInput!): Phone
-    physical_address(id: String, address: PhysicalAddressInput!): PhysicalAddress
-    postal_address(id: String, address: PostalAddressInput!): PostalAddress
+    physical_address(id: String, physical_address: PhysicalAddressInput!): PhysicalAddress
+    postal_address(id: String, postal_address: PostalAddressInput!): PostalAddress
     regular_schedule(id: String, schedule: RegularScheduleInput!): RegularSchedule
     holiday_schedule(id: String, schedule: HolidayScheduleInput!): HolidaySchedule
     funding(id: String, funding: FundingInput!): Funding

@@ -1,5 +1,5 @@
 const connectionManager = require('../common/connection_manager');
-const {loadServices} = require('./open_referral_loaders');
+const {loadServices} = require('../open_referral_api/open_referral_loaders');
 
 function loadPages (rows) {
   return rows.map(itm => {

@@ -15,12 +15,12 @@ const { merge } = require('lodash');
 
 const server = new ApolloServer({ 
   typeDefs: [
-    require('./api/app_schema'),
-    require('./api/open_referral_schema'),
+    require('./app_api/app_schema'),
+    require('./open_referral_api/open_referral_schema'),
   ],
   resolvers: merge(
-    require('./api/app_resolvers'),
-    require('./api/open_referral_resolvers'),
+    require('./app_api/app_resolvers'),
+    require('./open_referral_api/open_referral_resolvers'),
   ),
   context: ({ req }) => ({
     session: req.session,

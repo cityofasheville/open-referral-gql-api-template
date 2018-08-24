@@ -44,7 +44,6 @@ const updateOrCreate = function(args, type, tableName, allowed, required, loader
     });
     q = `insert into ${tableName} (${names}) values(${values})`;
   }
-
   const cn = connectionManager.getConnection('aws');
   return cn.query(q, qArgs)
   .then(res => {
