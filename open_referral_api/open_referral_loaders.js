@@ -1,4 +1,14 @@
 module.exports = {
+  loadMetadataTableDescriptions: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        name: itm.name,
+        language: itm.language,
+        character_set: itm.character_set
+      }
+    })
+  },
   loadMetadata: function(rows) {
     return rows.map(itm => {
       return {

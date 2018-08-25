@@ -395,6 +395,21 @@ schema += `
 `;
 
 schema += `
+  type MetadataTableDescription {
+    id: String
+    name: String
+    language: String
+    character_set: String
+  }
+  input MetadataTableDescriptionInput {
+    id: String
+    name: String
+    language: String
+    character_set: String
+  }
+`;
+
+schema += `
 
   type Query {
     "This is documentation"
@@ -419,6 +434,7 @@ schema += `
     languages(ids: [String]): [Language]
     accessibility_for_disabilities(ids: [String]): [AccessibilityForDisabilities]
     metadata(ids: [String]): [Metadata]
+    metadata_table_descriptions(ids: [String]): [MetadataTableDescription]
   }
 
   type Mutation {
@@ -443,13 +459,13 @@ schema += `
     language(id: String, language: LanguageInput!): Language
     accessibility_for_disabilities(id: String, accessibility_for_disabilities: AccessibilityForDisabilitiesInput!): AccessibilityForDisabilities
     metadata(id: String, metadata: MetadataInput!): Metadata
+    metadata_table_description(id: String, metadata_table_description: MetadataTableDescriptionInput!): MetadataTableDescription
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    metadata
     meta_table_descriptions
 
 Just mutations to do:

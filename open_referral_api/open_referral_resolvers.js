@@ -4,7 +4,7 @@ const { loadOrganizations, loadServices, loadPrograms, loadTaxonomies,
         loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules,
         loadFunding, loadEligibility, loadServiceAreas, loadRequiredDocuments,
         loadPaymentsAccepted, loadLanguages, loadAccessibilityForDisabilities,
-        loadMetadata
+        loadMetadata, loadMetadataTableDescriptions
 } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
@@ -87,6 +87,11 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 module.exports = {
   Mutation: {
+    metadata_table_description: (parent, args, context) => {
+      const allowed = ['id', 'name', 'language', 'character_set'];
+      const required = [];
+      return updateOrCreate(args, 'metadata_table_description', 'metadata_table_descriptions', allowed, required, loadMetadataTableDescriptions);
+    },
     metadata: (parent, args, context) => {
       const allowed = ['id', 'resource_id', 'last_action_date', 'last_action_type', 'field_name', 'previous_value', 'replacement_value', 'updated_by'];
       const required = ['resource_id', 'last_action_date', 'last_action_type', 'field_name', 'previous_value', 'replacement_value', 'updated_by'];
@@ -312,6 +317,9 @@ module.exports = {
     },
     metadata: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'metadata', loadMetadata);
+    },
+    metadata_table_descriptions: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'metadata_table_descriptions', loadMetadataTableDescriptions);
     },
   },
   Organization: {
