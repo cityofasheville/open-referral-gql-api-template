@@ -465,9 +465,6 @@ schema += `
 module.exports = gql`${schema}`;
 
 /*
-Queries+mutations to do:
-    meta_table_descriptions
-
 Just mutations to do:
     pages
 

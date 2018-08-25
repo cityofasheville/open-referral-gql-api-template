@@ -120,7 +120,6 @@ module.exports = {
   },
   loadAddresses: function(rows) {
     return rows.map(itm => {
-      console.log(`Loading ${JSON.stringify(itm)}`);
       return {
         id: itm.id,
         location_id: itm.location_id,
