@@ -345,6 +345,21 @@ schema += `
 `;
 
 schema += `
+  type Language {
+    id: String
+    service_id: String
+    location_id: String
+    language: String
+  }
+  input LanguageInput {
+    id: String
+    service_id: String
+    location_id: String
+    language: String
+  }
+`;
+
+schema += `
 
   type Query {
     "This is documentation"
@@ -366,6 +381,7 @@ schema += `
     service_areas(ids: [String]): [ServiceArea]
     required_documents(ids: [String]): [RequiredDocument]
     payments_accepted(ids: [String]): [PaymentAccepted]
+    languages(ids: [String]): [Language]
   }
 
   type Mutation {
@@ -387,13 +403,13 @@ schema += `
     service_area(id: String, service_area: ServiceAreaInput!): ServiceArea
     required_document(id: String, required_document: RequiredDocumentInput!): RequiredDocument
     payment_accepted(id: String, payment_accepted: PaymentAcceptedInput!): PaymentAccepted
+    language(id: String, language: LanguageInput!): Language
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    languages
     accessibility_for_disabilities
     metadata
     meta_table_descriptions

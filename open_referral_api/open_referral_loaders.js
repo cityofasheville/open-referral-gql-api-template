@@ -1,4 +1,14 @@
 module.exports = {
+  loadLanguages: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        service_id: itm.service_id,
+        location_id: itm.location_id,
+        language: itm.language,
+      }
+    });
+  },
   loadPaymentsAccepted: function(rows) {
     return rows.map(itm => {
       return {
