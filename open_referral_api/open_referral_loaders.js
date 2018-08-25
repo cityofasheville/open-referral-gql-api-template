@@ -1,4 +1,18 @@
 module.exports = {
+  loadMetadata: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        resource_id: itm.resource_id,
+        last_action_date: itm.last_action_date,
+        last_action_type: itm.last_action_type,
+        field_name: itm.field_name,
+        previous_value: itm.previous_value,
+        replacement_value: itm.replacement_value,
+        updated_by: itm.updated_by,
+      }
+    });
+  },
   loadAccessibilityForDisabilities: function(rows) {
     return rows.map(itm => {
       return {

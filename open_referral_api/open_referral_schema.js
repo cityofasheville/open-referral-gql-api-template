@@ -375,6 +375,25 @@ schema += `
   }
 `;
 
+const metadataFields = `
+  id: String
+  resource_id: String
+  last_action_date: String
+  last_action_type: String
+  field_name: String
+  previous_value: String
+  replacement_value: String
+  updated_by: String
+`;
+schema += `
+  type Metadata {
+    ${metadataFields}
+  }
+  input MetadataInput {
+    ${metadataFields}
+  }
+`;
+
 schema += `
 
   type Query {
@@ -399,6 +418,7 @@ schema += `
     payments_accepted(ids: [String]): [PaymentAccepted]
     languages(ids: [String]): [Language]
     accessibility_for_disabilities(ids: [String]): [AccessibilityForDisabilities]
+    metadata(ids: [String]): [Metadata]
   }
 
   type Mutation {
@@ -422,6 +442,7 @@ schema += `
     payment_accepted(id: String, payment_accepted: PaymentAcceptedInput!): PaymentAccepted
     language(id: String, language: LanguageInput!): Language
     accessibility_for_disabilities(id: String, accessibility_for_disabilities: AccessibilityForDisabilitiesInput!): AccessibilityForDisabilities
+    metadata(id: String, metadata: MetadataInput!): Metadata
   }
 `;
 module.exports = gql`${schema}`;
