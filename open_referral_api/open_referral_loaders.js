@@ -1,4 +1,14 @@
 module.exports = {
+  loadAccessibilityForDisabilities: function(rows) {
+    return rows.map(itm => {
+      return {
+        id: itm.id,
+        location_id: itm.location_id,
+        accessibility: itm.accessibility,
+        details: itm.details,
+      }
+    });
+  },
   loadLanguages: function(rows) {
     return rows.map(itm => {
       return {

@@ -3,7 +3,7 @@ const { loadOrganizations, loadServices, loadPrograms, loadTaxonomies,
         loadServiceTaxonomies, loadLocations, loadServicesAtLocation, loadContacts, 
         loadPhones, loadAddresses, loadRegularSchedules, loadHolidaySchedules,
         loadFunding, loadEligibility, loadServiceAreas, loadRequiredDocuments,
-        loadPaymentsAccepted, loadLanguages
+        loadPaymentsAccepted, loadLanguages, loadAccessibilityForDisabilities
 } = require('./open_referral_loaders');
 const uuid = require('../common/uuid');
 
@@ -86,6 +86,11 @@ const simpleObjectsEndpoint = function(args, tableName, loader) {
 
 module.exports = {
   Mutation: {
+    accessibility_for_disabilities: (parent, args, context) => {
+      const allowed = ['id', 'location_id', 'accessibility', 'details'];
+      const required = [];
+      return updateOrCreate(args, 'accessibility_for_disabilities', 'accessibility_for_disabilities', allowed, required, loadAccessibilityForDisabilities);
+    },
     language: (parent, args, context) => {
       const allowed = ['id', 'service_id', 'location_id', 'language'];
       const required = [];
@@ -295,6 +300,9 @@ module.exports = {
     },
     languages: (parent, args, context) => {
       return simpleObjectsEndpoint(args, 'languages', loadLanguages);
+    },
+    accessibility_for_disabilities: (parent, args, context) => {
+      return simpleObjectsEndpoint(args, 'accessibility_for_disabilities', loadAccessibilityForDisabilities);
     },
   },
   Organization: {

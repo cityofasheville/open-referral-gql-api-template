@@ -360,6 +360,22 @@ schema += `
 `;
 
 schema += `
+  type AccessibilityForDisabilities {
+    id: String
+    location_id: String
+    accessibility: String
+    details: String
+  }
+
+  input AccessibilityForDisabilitiesInput {
+    id: String
+    location_id: String
+    accessibility: String
+    details: String
+  }
+`;
+
+schema += `
 
   type Query {
     "This is documentation"
@@ -382,6 +398,7 @@ schema += `
     required_documents(ids: [String]): [RequiredDocument]
     payments_accepted(ids: [String]): [PaymentAccepted]
     languages(ids: [String]): [Language]
+    accessibility_for_disabilities(ids: [String]): [AccessibilityForDisabilities]
   }
 
   type Mutation {
@@ -404,13 +421,13 @@ schema += `
     required_document(id: String, required_document: RequiredDocumentInput!): RequiredDocument
     payment_accepted(id: String, payment_accepted: PaymentAcceptedInput!): PaymentAccepted
     language(id: String, language: LanguageInput!): Language
+    accessibility_for_disabilities(id: String, accessibility_for_disabilities: AccessibilityForDisabilitiesInput!): AccessibilityForDisabilities
   }
 `;
 module.exports = gql`${schema}`;
 
 /*
 Queries+mutations to do:
-    accessibility_for_disabilities
     metadata
     meta_table_descriptions
 
