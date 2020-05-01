@@ -6,7 +6,9 @@
   "scripts": {
     "start": "nodemon ./index.js --exec babel-node",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "snyk-protect": "snyk protect",
+    "prepare": "yarn run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -36,7 +38,8 @@
     "mssql": "^3.3.0",
     "pg": "^7.4.3",
     "pg-pool": "^2.0.3",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "snyk": "^1.316.1"
   },
   "optionalDependencies": {
     "msnodesqlv8": "^0.6.7"
@@ -56,5 +59,6 @@
     "eslint-plugin-react": "^4.2.3",
     "faker": "^4.1.0",
     "nodemon": "^1.9.1"
-  }
+  },
+  "snyk": true
 }
